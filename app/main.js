@@ -3,7 +3,7 @@ import {app, BrowserWindow} from 'electron';
 import path from 'path';
 import url from 'url';
 import AppUtil from './utils/AppUtil';
-import {AppModes, DbFileName} from './components/AppConstants';
+import {AppModes, DbFileName} from './constants/AppConstants';
 import type {AppModeType} from './types/AppTypes';
 const sqlite3 = require('sqlite3').verbose();
 

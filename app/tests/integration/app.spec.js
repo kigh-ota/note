@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import {AppModes, DbFileName} from '../../components/AppConstants';
+import {AppModes, DbFileName} from '../../constants/AppConstants';
 
 function getDocumentPath(app): Promise<string> {
     return app.electron.remote.app.getPath('documents');

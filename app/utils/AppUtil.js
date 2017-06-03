@@ -1,6 +1,6 @@
 // @flow
+import {AppModes} from '../constants/AppConstants';
 import type {AppModeType} from '../types/AppTypes';
-import {AppModes} from '../components/AppConstants';
 
 export default class AppUtil {
     static getAppMode(): AppModeType {

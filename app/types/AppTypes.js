@@ -1,4 +1,4 @@
 // @flow
-import {AppModes} from '../components/AppConstants';
+import {AppModes} from '../constants/AppConstants';
 
 export type AppModeType = $Keys<typeof AppModes>;
