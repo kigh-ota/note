@@ -1,0 +1,24 @@
+{
+  "env": {
+    "development": {
+      "presets": [
+        ["es2015", {"modules": false}],
+        "react"
+      ],
+      "plugins": ["transform-flow-strip-types"]
+    },
+
+    "production": {
+      "presets": [
+        ["es2015", {"modules": false}],
+        "react"
+      ],
+      "plugins": ["transform-flow-strip-types"]
+    },
+
+    "test": {
+      "presets": ["es2015", "react"],
+      "plugins": ["transform-flow-strip-types"]
+    }
+  }
+}
