@@ -1,0 +1,11 @@
+machine:
+    node:
+        version: 7.9.0
+dependencies:
+    post:
+        - npm install
+        - npm run rebuild
+        - npm run webpack:prod
+test:
+    override:
+        - npm run ci
