@@ -7,6 +7,7 @@ import {AppModes, DbFileName} from './constants/AppConstants';
 import type {AppModeType} from './types/AppTypes';
 import db from 'sqlite';
 import sqlite3 from 'sqlite3';
+import NoteRepository from './repositories/NoteRepository';
 
 const appMode: AppModeType = AppUtil.getAppMode();
 let mainWindow: ?BrowserWindow;
@@ -39,7 +40,10 @@ app.on('ready', () => {
             verbose: true,
         }
     ).then(() => {
-        return createWindow();
+        return Promise.all([NoteRepository.init()]);
+    }).then(() => {
+        createWindow();
+        return Promise.resolve();
     });
 });
 
