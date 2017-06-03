@@ -5,13 +5,13 @@ import url from 'url';
 import AppUtil from './utils/AppUtil';
 import {AppModes, DbFileName} from './constants/AppConstants';
 import type {AppModeType} from './types/AppTypes';
-const sqlite3 = require('sqlite3').verbose();
+import db from 'sqlite';
+import sqlite3 from 'sqlite3';
 
 const appMode: AppModeType = AppUtil.getAppMode();
 let mainWindow: ?BrowserWindow;
-let db: Object;
 
-function createWindow() {
+function createWindow(): void {
     const width = appMode === AppModes.DEVELOPMENT ? 1200 : 900;
     mainWindow = new BrowserWindow({width: width, height: 700, show: false});
     mainWindow.loadURL(url.format({
@@ -32,11 +32,15 @@ function createWindow() {
 }
 
 app.on('ready', () => {
-    db = new sqlite3.Database(
+    return db.open(
         path.join(app.getPath('documents'), DbFileName[appMode]),
-        sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE
-    );
-    createWindow();
+        {
+            mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
+            verbose: true,
+        }
+    ).then(() => {
+        return createWindow();
+    });
 });
 
 app.on('window-all-closed', function () {
@@ -56,5 +60,5 @@ app.on('activate', function () {
 });
 
 app.on('quit', () => {
-    db && db.close();
+    db.close();
 });

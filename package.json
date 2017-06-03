@@ -43,6 +43,7 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "spectron": "^3.6.4",
+    "sqlite": "^2.8.0",
     "webpack": "^2.6.1"
   },
   "dependencies": {
