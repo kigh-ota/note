@@ -1,10 +1,10 @@
 // @flow
-import {app, BrowserWindow} from 'electron';
+import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import url from 'url';
 import AppUtil from './utils/AppUtil';
 import {AppModes, DbFileName} from './constants/AppConstants';
-import type {AppModeType} from './types/AppTypes';
+import type {AppModeType, Note} from './types/AppTypes';
 import db from 'sqlite';
 import sqlite3 from 'sqlite3';
 import NoteRepository from './repositories/NoteRepository';
@@ -32,6 +32,16 @@ function createWindow(): void {
     });
 }
 
+function addNote(event: Object, note: Note): Promise<boolean> {
+    return NoteRepository.insert_(note.title, note.content).then(id => {
+        console.log(`Note added as id=${id}`);
+        return true;
+    }).catch(() => {
+        console.log('Failed to add note');
+        return false;
+    });
+}
+
 app.on('ready', () => {
     return db.open(
         path.join(app.getPath('documents'), DbFileName[appMode]),
@@ -42,6 +52,9 @@ app.on('ready', () => {
     ).then(() => {
         return Promise.all([NoteRepository.init()]);
     }).then(() => {
+
+        ipcMain.on('ADD_NOTE', addNote);
+
         createWindow();
         return Promise.resolve();
     });

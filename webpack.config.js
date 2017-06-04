@@ -1,3 +1,5 @@
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+
 const EXTERNAL_MODULES = ['sqlite3'];
 const isProduction = process.env.NODE_ENV !== 'production';
 
@@ -19,8 +21,19 @@ module.exports = [
                     use: 'babel-loader',
                     exclude: /node_modules/
                 },
+                {
+                    test: /\.css$/,
+                    use: ExtractTextPlugin.extract({
+                        use: 'css-loader'
+                    })
+                }
             ]
         },
+        plugins: [
+            new ExtractTextPlugin({
+                filename: 'renderer.css'
+            })
+        ],
         target: 'electron-renderer'
     },
     {
