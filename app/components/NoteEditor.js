@@ -5,6 +5,7 @@ import TextField from 'material-ui/TextField';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentSave from 'material-ui/svg-icons/content/save';
 import Paper from 'material-ui/Paper';
+import Divider from 'material-ui/Divider';
 
 type State = {
     title: string,
@@ -39,26 +40,38 @@ export default class NoteEditor extends React.PureComponent {
                     rounded={false}
                     style={{
                         margin: '8px',
-                        padding: '8px',
                     }}
                 >
                     <TextField
                         name="titleInput"
-                        floatingLabelText="Title"
+                        style={{
+                            margin: '8px',
+                        }}
+                        hintText="Title"
+                        underlineShow={false}
                         fullWidth={true}
                         value={this.state.title}
                         onChange={(e: Object, newValue: string) => {this.setState({title: newValue});}}
-                    /><br />
+                    />
+                    <Divider/>
                     <TextField
                         name="contentInput"
-                        floatingLabelText="Content"
+                        style={{
+                            margin: '8px',
+                        }}
+                        hintText="Content"
+                        underlineShow={false}
                         multiLine={true}
                         rows={10}
                         fullWidth={true}
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({content: newValue});}}
-                    /><br />
+                    />
+                    <Divider/>
                     <FloatingActionButton
+                        style={{
+                            margin: '8px',
+                        }}
                         onTouchTap={this.handleSave.bind(this)}
                         disabled={!canSave}
                     >
