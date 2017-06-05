@@ -70,6 +70,15 @@ function getNote(event: Object, id: NoteId): Promise<boolean> {
     });
 }
 
+function deleteNote(event: Object, id: NoteId): Promise<boolean> {
+    return NoteRepository.delete_(id).then(() => {
+        return sendNotesToRenderer_(event);
+    }).catch(() => {
+        console.log(`Failed to delete the note (id=${id})`);
+        return false;
+    });
+}
+
 app.on('ready', () => {
     return db.open(
         path.join(app.getPath('documents'), DbFileName[appMode]),
@@ -84,6 +93,7 @@ app.on('ready', () => {
         ipcMain.on('SAVE_NOTE', saveNote);
         ipcMain.on('FETCH_NOTES', fetchNotes);
         ipcMain.on('GET_NOTE', getNote);
+        ipcMain.on('DELETE_NOTE', deleteNote);
 
         createWindow();
         return Promise.resolve();

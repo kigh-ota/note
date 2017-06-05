@@ -18,8 +18,10 @@
     "test:integration": "BABEL_ENV=test mocha --compilers js:babel-core/register ./app/tests/integration/**/*.spec.js",
     "test": "npm run test:unit && npm run test:integration",
     "ci": "npm run flow && npm run lint && npm run test",
-    "start": "electron .",
-    "debug": "DEVELOPMENT=1 electron ."
+    "start:prod": "electron .",
+    "start:dev": "DEVELOPMENT=1 electron .",
+    "dev": "npm run webpack:dev && npm run start:dev",
+    "prod": "npm run webpack:prod && npm run start:prod"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",

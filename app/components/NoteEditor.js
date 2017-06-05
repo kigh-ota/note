@@ -6,12 +6,13 @@ import FloatingActionButton from 'material-ui/FloatingActionButton';
 import Snackbar from 'material-ui/Snackbar';
 import ContentSave from 'material-ui/svg-icons/content/save';
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import ContentClear from 'material-ui/svg-icons/content/clear';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
 
 type State = {
-    id?: number,
+    id: ?number,
     title: string,
     content: string,
     modified: boolean,
@@ -19,6 +20,7 @@ type State = {
 };
 
 const initState: State = {
+    id: undefined,
     title: '',
     content: '',
     modified: false,
@@ -59,7 +61,7 @@ export default class NoteEditor extends React.PureComponent {
             });
         });
         this.autoSaveTimer = setInterval(this.save.bind(this), AUTO_SAVE_INTERVAL_SEC * 1000);
-        this.new();
+        this.newNote();
     }
 
     componentWillUnmount() {
@@ -73,7 +75,7 @@ export default class NoteEditor extends React.PureComponent {
         }
     }
 
-    new(): void {
+    newNote(): void {
         this.setState(initState);
         this.titleInput.focus();
     }
@@ -91,6 +93,14 @@ export default class NoteEditor extends React.PureComponent {
             });
         });
         ipcRenderer.send('GET_NOTE', id);
+    }
+
+    deleteNote(): void {
+        if (this.state.id) {
+            ipcRenderer.send('DELETE_NOTE', this.state.id);
+            this.setState(initState);
+            this.titleInput.focus();
+        }
     }
 
     render() {
@@ -129,7 +139,7 @@ export default class NoteEditor extends React.PureComponent {
                         hintText="Content"
                         underlineShow={false}
                         multiLine={true}
-                        rows={10}
+                        rows={6}
                         fullWidth={true}
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({
@@ -138,25 +148,40 @@ export default class NoteEditor extends React.PureComponent {
                         });}}
                     />
                     <Divider/>
-                    <FloatingActionButton
-                        style={{
-                            margin: '8px',
-                        }}
-                        onTouchTap={this.save.bind(this)}
-                        disabled={!this.canSave()}
-                    >
-                        <ContentSave />
-                    </FloatingActionButton>
-                    <FloatingActionButton
-                        style={{
-                            margin: '8px',
-                        }}
-                        onTouchTap={this.new.bind(this)}
-                        disabled={this.canSave()}
-                    >
-                        <ContentAdd />
-                    </FloatingActionButton>
-
+                    <div style={{width: '100%', display: 'flex'}}>
+                        <FloatingActionButton
+                            style={{
+                                margin: '8px',
+                            }}
+                            onTouchTap={this.save.bind(this)}
+                            disabled={!this.canSave()}
+                        >
+                            <ContentSave />
+                        </FloatingActionButton>
+                        <FloatingActionButton
+                            style={{
+                                margin: '8px',
+                            }}
+                            onTouchTap={this.newNote.bind(this)}
+                            disabled={this.canSave()}
+                        >
+                            <ContentAdd />
+                        </FloatingActionButton>
+                        {this.state.id &&
+                            <FloatingActionButton
+                                style={{
+                                    marginLeft: 'auto',
+                                    marginRight: '8px',
+                                    marginTop: '8px',
+                                    marginBottom: '8px',
+                                }}
+                                secondary={true}
+                                onTouchTap={this.deleteNote.bind(this)}
+                            >
+                                <ContentClear />
+                            </FloatingActionButton>
+                        }
+                    </div>
                 </Paper>
                 <Snackbar
                     open={this.state.autoSaveNotify}
