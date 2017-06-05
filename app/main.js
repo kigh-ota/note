@@ -32,15 +32,30 @@ function createWindow(): void {
     });
 }
 
+function sendNotesToRenderer_(event: Object): Promise<boolean> {
+    return NoteRepository.selectAll_().then(rows => {
+        event.sender.send('REFRESH_NOTES', rows);
+        return true;
+    }).catch(() => {
+        return false;
+    });
+}
+
 function addNote(event: Object, note: Note): Promise<boolean> {
     return NoteRepository.insert_(note.title, note.content).then(id => {
         console.log(`Note added as id=${id}`);
-        return true;
+        return sendNotesToRenderer_(event);
     }).catch(() => {
         console.log('Failed to add note');
         return false;
     });
 }
+
+function fetchNotes(event: Object): Promise<boolean> {
+    return sendNotesToRenderer_(event);
+}
+
+// TODO add cache for notes
 
 app.on('ready', () => {
     return db.open(
@@ -54,6 +69,7 @@ app.on('ready', () => {
     }).then(() => {
 
         ipcMain.on('ADD_NOTE', addNote);
+        ipcMain.on('FETCH_NOTES', fetchNotes);
 
         createWindow();
         return Promise.resolve();
