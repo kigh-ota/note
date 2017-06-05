@@ -51,6 +51,7 @@
     "reset-css": "^2.2.0",
     "spectron": "^3.6.4",
     "sqlite": "^2.8.0",
+    "string.prototype.padstart": "^3.0.0",
     "webpack": "^2.6.1"
   },
   "dependencies": {

@@ -7,9 +7,14 @@ import Snackbar from 'material-ui/Snackbar';
 import ContentSave from 'material-ui/svg-icons/content/save';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ContentClear from 'material-ui/svg-icons/content/clear';
+import ActionToday from 'material-ui/svg-icons/action/today';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
+import padStart from 'string.prototype.padstart';
+
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
+
+padStart.shim();
 
 type State = {
     id: ?number,
@@ -33,6 +38,7 @@ export default class NoteEditor extends React.PureComponent {
     state: State;
     autoSaveTimer: number;
     titleInput: TextField;
+    contentInput: TextField;
 
     constructor() {
         super();
@@ -75,9 +81,19 @@ export default class NoteEditor extends React.PureComponent {
         }
     }
 
+    static toDateString(date: Date): string {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    }
+
     newNote(): void {
         this.setState(initState);
         this.titleInput.focus();
+    }
+
+    newNoteToday(): void {
+        this.setState(initState);
+        this.setState({title: NoteEditor.toDateString(new Date())});
+        this.contentInput.focus();
     }
 
     open(id: NoteId): void {
@@ -109,15 +125,11 @@ export default class NoteEditor extends React.PureComponent {
                 <Paper
                     zDepth={1}
                     rounded={false}
-                    style={{
-                        margin: '8px',
-                    }}
+                    style={{margin: '8px'}}
                 >
                     <TextField
                         name="titleInput"
-                        style={{
-                            margin: '8px',
-                        }}
+                        style={{margin: '8px'}}
                         ref={input => {this.titleInput = input;}}
                         hintText="Title"
                         underlineShow={false}
@@ -133,9 +145,8 @@ export default class NoteEditor extends React.PureComponent {
                     <Divider/>
                     <TextField
                         name="contentInput"
-                        style={{
-                            margin: '8px',
-                        }}
+                        style={{margin: '8px'}}
+                        ref={input => {this.contentInput = input;}}
                         hintText="Content"
                         underlineShow={false}
                         multiLine={true}
@@ -150,22 +161,25 @@ export default class NoteEditor extends React.PureComponent {
                     <Divider/>
                     <div style={{width: '100%', display: 'flex'}}>
                         <FloatingActionButton
-                            style={{
-                                margin: '8px',
-                            }}
+                            style={{margin: '8px'}}
                             onTouchTap={this.save.bind(this)}
                             disabled={!this.canSave()}
                         >
                             <ContentSave />
                         </FloatingActionButton>
                         <FloatingActionButton
-                            style={{
-                                margin: '8px',
-                            }}
+                            style={{margin: '8px'}}
                             onTouchTap={this.newNote.bind(this)}
                             disabled={this.canSave()}
                         >
                             <ContentAdd />
+                        </FloatingActionButton>
+                        <FloatingActionButton
+                            style={{margin: '8px'}}
+                            onTouchTap={this.newNoteToday.bind(this)}
+                            disabled={this.canSave()}
+                        >
+                            <ActionToday />
                         </FloatingActionButton>
                         {this.state.id &&
                             <FloatingActionButton
