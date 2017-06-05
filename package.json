@@ -9,8 +9,8 @@
   ],
   "main": "./app/dist/main.js",
   "scripts": {
-    "webpack:dev": "webpack --progress --colors",
-    "webpack:prod": "NODE_ENV=production webpack -p --progress --colors",
+    "webpack:dev": "webpack --colors",
+    "webpack:prod": "NODE_ENV=production webpack -p --colors",
     "rebuild": "electron-rebuild -f -w sqlite3",
     "flow": "flow",
     "lint": "eslint --format=node_modules/eslint-formatter-pretty . --ext .js --ext .jsx",
