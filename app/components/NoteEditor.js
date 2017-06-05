@@ -5,6 +5,7 @@ import TextField from 'material-ui/TextField';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import Snackbar from 'material-ui/Snackbar';
 import ContentSave from 'material-ui/svg-icons/content/save';
+import ContentAdd from 'material-ui/svg-icons/content/add';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
@@ -29,6 +30,7 @@ const AUTO_SAVE_INTERVAL_SEC = 5;
 export default class NoteEditor extends React.PureComponent {
     state: State;
     autoSaveTimer: number;
+    titleInput: TextField;
 
     constructor() {
         super();
@@ -57,6 +59,7 @@ export default class NoteEditor extends React.PureComponent {
             });
         });
         this.autoSaveTimer = setInterval(this.save.bind(this), AUTO_SAVE_INTERVAL_SEC * 1000);
+        this.new();
     }
 
     componentWillUnmount() {
@@ -68,6 +71,11 @@ export default class NoteEditor extends React.PureComponent {
             ipcRenderer.send('SAVE_NOTE', this.noteObject());
             this.setState({modified: false});
         }
+    }
+
+    new(): void {
+        this.setState(initState);
+        this.titleInput.focus();
     }
 
     open(id: NoteId): void {
@@ -100,6 +108,7 @@ export default class NoteEditor extends React.PureComponent {
                         style={{
                             margin: '8px',
                         }}
+                        ref={input => {this.titleInput = input;}}
                         hintText="Title"
                         underlineShow={false}
                         fullWidth={true}
@@ -138,6 +147,16 @@ export default class NoteEditor extends React.PureComponent {
                     >
                         <ContentSave />
                     </FloatingActionButton>
+                    <FloatingActionButton
+                        style={{
+                            margin: '8px',
+                        }}
+                        onTouchTap={this.new.bind(this)}
+                        disabled={this.canSave()}
+                    >
+                        <ContentAdd />
+                    </FloatingActionButton>
+
                 </Paper>
                 <Snackbar
                     open={this.state.autoSaveNotify}
