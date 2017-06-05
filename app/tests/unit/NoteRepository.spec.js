@@ -35,25 +35,26 @@ describe('NoteRepository', () => {
         const title2 = '$¥\\';
         const content2 = 'あいうえお\nかきくけこ\n\t"HOGE"';
         let id1, id2;
-        return NoteRepository.insert_(title1, content1).then(id => {
-            id1 = id;
-            return NoteRepository.select_(id);
+        return NoteRepository.insert_(title1, content1).then(stmt => {
+            id1 = stmt.lastID;
+            return NoteRepository.select_(id1);
         }).then(row => {
             console.log(row);
             assert.equal(row.title, title1);
             assert.equal(row.content, content1);
         }).then(() => {
             return NoteRepository.insert_('', '');
-        }).then(id => {
-            id2 = id;
-            return NoteRepository.select_(id);
+        }).then(stmt => {
+            id2 = stmt.lastID;
+            return NoteRepository.select_(id2);
         }).then(row => {
             console.log(row);
             assert.equal(row.title, '');
             assert.equal(row.content, '');
         }).then(() => {
             return NoteRepository.update_(id2, title2, content2);
-        }).then(() => {
+        }).then(stmt => {
+            assert.equal(stmt.lastID, id2);
             return NoteRepository.delete_(id1);
         }).then(() => {
             return NoteRepository.selectAll_();

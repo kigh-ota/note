@@ -42,8 +42,8 @@ function sendNotesToRenderer_(event: Object): Promise<boolean> {
 }
 
 function addNote(event: Object, note: Note): Promise<boolean> {
-    return NoteRepository.insert_(note.title, note.content).then(id => {
-        console.log(`Note added as id=${id}`);
+    return NoteRepository.insert_(note.title, note.content).then(stmt => {
+        console.log(`Note added as id=${stmt.lastID}`);
         return sendNotesToRenderer_(event);
     }).catch(() => {
         console.log('Failed to add note');
@@ -53,6 +53,21 @@ function addNote(event: Object, note: Note): Promise<boolean> {
 
 function fetchNotes(event: Object): Promise<boolean> {
     return sendNotesToRenderer_(event);
+}
+
+function autoSaveNote(event: Object, note: Note): Promise<boolean> {
+    return (
+        note.id
+        ? NoteRepository.update_(note.id, note.title, note.content)
+        : NoteRepository.insert_(note.title, note.content)
+    ).then(stmt => {
+        console.log(`Note saved as id=${stmt.lastID}`);
+        event.sender.send('AUTO_SAVE_NOTE_REPLY', stmt.lastID);
+        return sendNotesToRenderer_(event);
+    }).catch(() => {
+        console.log('Failed to auto-save a note');
+        return false;
+    });
 }
 
 // TODO add cache for notes
@@ -70,6 +85,7 @@ app.on('ready', () => {
 
         ipcMain.on('ADD_NOTE', addNote);
         ipcMain.on('FETCH_NOTES', fetchNotes);
+        ipcMain.on('AUTO_SAVE_NOTE', autoSaveNote);
 
         createWindow();
         return Promise.resolve();

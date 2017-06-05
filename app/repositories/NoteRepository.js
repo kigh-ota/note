@@ -42,15 +42,13 @@ export default class NoteRepository {
         return db.all(SQL.SELECT_ALL);
     }
 
-    static insert_(title: string, content: string): Promise<number> {
+    static insert_(title: string, content: string): Promise<Statement> {
         const now: string = new Date().toISOString();
         return db.run(SQL.INSERT, {
             $title: title,
             $content: content,
             $dtCreated: now,
             $dtUpdated: now,
-        }).then(stmt => {
-            return stmt.lastID;
         });
     }
 
