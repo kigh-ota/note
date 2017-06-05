@@ -4,7 +4,7 @@ import path from 'path';
 import url from 'url';
 import AppUtil from './utils/AppUtil';
 import {AppModes, DbFileName} from './constants/AppConstants';
-import type {AppModeType, Note} from './types/AppTypes';
+import type {AppModeType, Note, NoteId} from './types/AppTypes';
 import db from 'sqlite';
 import sqlite3 from 'sqlite3';
 import NoteRepository from './repositories/NoteRepository';
@@ -41,36 +41,34 @@ function sendNotesToRenderer_(event: Object): Promise<boolean> {
     });
 }
 
-function addNote(event: Object, note: Note): Promise<boolean> {
-    return NoteRepository.insert_(note.title, note.content).then(stmt => {
-        console.log(`Note added as id=${stmt.lastID}`);
-        return sendNotesToRenderer_(event);
-    }).catch(() => {
-        console.log('Failed to add note');
-        return false;
-    });
-}
-
 function fetchNotes(event: Object): Promise<boolean> {
     return sendNotesToRenderer_(event);
 }
 
-function autoSaveNote(event: Object, note: Note): Promise<boolean> {
+function saveNote(event: Object, note: Note): Promise<boolean> {
     return (
         note.id
         ? NoteRepository.update_(note.id, note.title, note.content)
         : NoteRepository.insert_(note.title, note.content)
     ).then(stmt => {
         console.log(`Note saved as id=${stmt.lastID}`);
-        event.sender.send('AUTO_SAVE_NOTE_REPLY', stmt.lastID);
+        event.sender.send('SAVE_NOTE_REPLY', stmt.lastID);
         return sendNotesToRenderer_(event);
     }).catch(() => {
-        console.log('Failed to auto-save a note');
+        console.log('Failed to save a note');
         return false;
     });
 }
 
-// TODO add cache for notes
+function getNote(event: Object, id: NoteId): Promise<boolean> {
+    return NoteRepository.select_(id).then(row => {
+        event.sender.send('GET_NOTE_REPLY', row);
+        return true;
+    }).catch(() => {
+        console.log(`Failed to get a note (id=${id})`);
+        return false;
+    });
+}
 
 app.on('ready', () => {
     return db.open(
@@ -83,9 +81,9 @@ app.on('ready', () => {
         return Promise.all([NoteRepository.init()]);
     }).then(() => {
 
-        ipcMain.on('ADD_NOTE', addNote);
+        ipcMain.on('SAVE_NOTE', saveNote);
         ipcMain.on('FETCH_NOTES', fetchNotes);
-        ipcMain.on('AUTO_SAVE_NOTE', autoSaveNote);
+        ipcMain.on('GET_NOTE', getNote);
 
         createWindow();
         return Promise.resolve();

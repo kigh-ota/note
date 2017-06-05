@@ -7,7 +7,7 @@ import Snackbar from 'material-ui/Snackbar';
 import ContentSave from 'material-ui/svg-icons/content/save';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
-import type {Note} from '../types/AppTypes';
+import type {Note, NoteId, SavedNote} from '../types/AppTypes';
 
 type State = {
     id?: number,
@@ -50,31 +50,42 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     componentDidMount() {
-        ipcRenderer.on('AUTO_SAVE_NOTE_REPLY', (event: Object, id: number) => {
+        ipcRenderer.on('SAVE_NOTE_REPLY', (event: Object, id: number) => {
             this.setState({
                 id: id,
                 autoSaveNotify: true,
             });
         });
-        this.autoSaveTimer = setInterval(() => {
-            if (this.canSave()) {
-                ipcRenderer.send('AUTO_SAVE_NOTE', this.noteObject());
-                this.setState({modified: false});
-            }
-        }, AUTO_SAVE_INTERVAL_SEC * 1000);
+        this.autoSaveTimer = setInterval(this.save.bind(this), AUTO_SAVE_INTERVAL_SEC * 1000);
     }
 
     componentWillUnmount() {
         clearInterval(this.autoSaveTimer);
     }
 
-    handleSave(): void {
-        ipcRenderer.send('ADD_NOTE', this.noteObject());
-        this.setState(initState);
+    save(): void {
+        if (this.canSave()) {
+            ipcRenderer.send('SAVE_NOTE', this.noteObject());
+            this.setState({modified: false});
+        }
+    }
+
+    open(id: NoteId): void {
+        ipcRenderer.once('GET_NOTE_REPLY', (event: Object, note: SavedNote) => {
+            if (note.id != id) {
+                throw new Error('invalid note id');
+            }
+            this.setState({
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                modified: false,
+            });
+        });
+        ipcRenderer.send('GET_NOTE', id);
     }
 
     render() {
-
         return (
             <div>
                 <Paper
@@ -122,7 +133,7 @@ export default class NoteEditor extends React.PureComponent {
                         style={{
                             margin: '8px',
                         }}
-                        onTouchTap={this.handleSave.bind(this)}
+                        onTouchTap={this.save.bind(this)}
                         disabled={!this.canSave()}
                     >
                         <ContentSave />

@@ -4,20 +4,25 @@ import {ipcRenderer} from 'electron';
 import {List, ListItem} from 'material-ui/List';
 import * as Immutable from 'immutable';
 
-import type {Note} from '../types/AppTypes';
+import type {NoteId, SavedNote} from '../types/AppTypes';
+
+type Props = {
+    onSelectNote: (NoteId) => void,
+}
 
 type State = {
-    notes: Immutable.List<Note>,
+    notes: Immutable.List<SavedNote>,
 };
 
 export default class NoteViewer extends React.PureComponent {
+    props: Props;
     state: State;
 
     constructor() {
         super();
         this.state = {notes: Immutable.List()};
 
-        ipcRenderer.on('REFRESH_NOTES', (event: Object, notes: Array<Note>) => {
+        ipcRenderer.on('REFRESH_NOTES', (event: Object, notes: Array<SavedNote>) => {
             this.setState({notes: Immutable.List(notes)});
         });
 
@@ -34,6 +39,7 @@ export default class NoteViewer extends React.PureComponent {
                 <ListItem
                     key={note.id}
                     primaryText={`[${note.id ? note.id.toString() : ''}] ${note.title}`}
+                    onTouchTap={this.props.onSelectNote.bind(this, note.id)}
                 />
             );
         });
