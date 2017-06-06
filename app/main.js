@@ -46,18 +46,24 @@ function fetchNotes(event: Object): Promise<boolean> {
 }
 
 function saveNote(event: Object, note: Note): Promise<boolean> {
-    return (
-        note.id
+    let promise: Promise<boolean>;
+    promise = note.id
         ? NoteRepository.update_(note.id, note.title, note.content)
-        : NoteRepository.insert_(note.title, note.content)
-    ).then(stmt => {
-        console.log(`Note saved as id=${stmt.lastID}`);
-        event.sender.send('SAVE_NOTE_REPLY', stmt.lastID);
+        : NoteRepository.insert_(note.title, note.content);
+    promise = promise.then(stmt => {
+        if (note.id) {
+            console.log(`Note updated: id=${note.id}`);
+            event.sender.send('SAVE_NOTE_REPLY', note.id);
+        } else {
+            console.log(`Note added: id=${stmt.lastID}`);
+            event.sender.send('SAVE_NOTE_REPLY', stmt.lastID);
+        }
         return sendNotesToRenderer_(event);
     }).catch(() => {
         console.log('Failed to save a note');
         return false;
     });
+    return promise;
 }
 
 function getNote(event: Object, id: NoteId): Promise<boolean> {
