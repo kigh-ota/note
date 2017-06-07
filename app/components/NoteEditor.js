@@ -6,10 +6,13 @@ import FloatingActionButton from 'material-ui/FloatingActionButton';
 import Snackbar from 'material-ui/Snackbar';
 import ContentSave from 'material-ui/svg-icons/content/save';
 import ContentAdd from 'material-ui/svg-icons/content/add';
-import ContentClear from 'material-ui/svg-icons/content/clear';
 import ActionToday from 'material-ui/svg-icons/action/today';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
+import IconMenu from 'material-ui/IconMenu';
+import MenuItem from 'material-ui/MenuItem';
+import IconButton from 'material-ui/IconButton';
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import padStart from 'string.prototype.padstart';
 
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
@@ -157,6 +160,9 @@ export default class NoteEditor extends React.PureComponent {
                             content: newValue,
                             modified: true,
                         });}}
+                        onKeyUp={(e: Object) => {
+                            console.log(e.target.selectionStart, e.target.selectionEnd);
+                        }}
                     />
                     <Divider/>
                     <div style={{width: '100%', display: 'flex'}}>
@@ -182,18 +188,22 @@ export default class NoteEditor extends React.PureComponent {
                             <ActionToday />
                         </FloatingActionButton>
                         {this.state.id &&
-                            <FloatingActionButton
+                            <IconMenu
+                                iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
+                                anchorOrigin={{horizontal: 'right', vertical: 'top'}}
+                                targetOrigin={{horizontal: 'right', vertical: 'top'}}
                                 style={{
                                     marginLeft: 'auto',
                                     marginRight: '8px',
                                     marginTop: '8px',
                                     marginBottom: '8px',
                                 }}
-                                secondary={true}
-                                onTouchTap={this.deleteNote.bind(this)}
                             >
-                                <ContentClear />
-                            </FloatingActionButton>
+                                <MenuItem
+                                    primaryText="Delete"
+                                    onTouchTap={this.deleteNote.bind(this)}
+                                />
+                            </IconMenu>
                         }
                     </div>
                 </Paper>
