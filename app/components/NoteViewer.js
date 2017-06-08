@@ -38,6 +38,10 @@ export default class NoteViewer extends React.PureComponent {
             return (
                 <ListItem
                     key={note.id}
+                    innerDivStyle={{
+                        fontFamily: 'Monaco',
+                        fontSize: '13px',
+                    }}
                     primaryText={`[${note.id ? note.id.toString() : ''}] ${note.title}`}
                     onTouchTap={this.props.onSelectNote.bind(this, note.id)}
                 />

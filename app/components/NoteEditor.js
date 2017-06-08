@@ -152,7 +152,6 @@ export default class NoteEditor extends React.PureComponent {
 
     render() {
         const numOfContentLines = (this.state.content.match(/\n/g) || []).length + 1;
-        // console.log(numOfContentLines);
         return (
             <div>
                 <Paper
@@ -164,7 +163,11 @@ export default class NoteEditor extends React.PureComponent {
                 >
                     <TextField
                         name="titleInput"
-                        style={{margin: '8px'}}
+                        style={{
+                            margin: '8px',
+                            fontFamily: 'Monaco',
+                            fontSize: '13px',
+                        }}
                         ref={input => {this.titleInput = input;}}
                         hintText="Title"
                         underlineShow={false}
