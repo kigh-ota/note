@@ -1,19 +1,22 @@
 // @flow
 import * as React from 'react';
 import {ipcRenderer} from 'electron';
+
 import TextField from 'material-ui/TextField';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import Snackbar from 'material-ui/Snackbar';
-import ContentSave from 'material-ui/svg-icons/content/save';
-import ContentAdd from 'material-ui/svg-icons/content/add';
-import ActionToday from 'material-ui/svg-icons/action/today';
+// import ContentSave from 'material-ui/svg-icons/content/save';
 import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
 import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
 import Chip from 'material-ui/Chip';
 import IconButton from 'material-ui/IconButton';
+
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
+import ContentAdd from 'material-ui/svg-icons/content/add';
+import ActionToday from 'material-ui/svg-icons/action/today';
+
 import padStart from 'string.prototype.padstart';
 import {OrderedSet} from 'immutable';
 
@@ -40,7 +43,7 @@ const initState: State = {
 
 type Tag = string;
 
-const AUTO_SAVE_INTERVAL_SEC = 5;
+const AUTO_SAVE_INTERVAL_SEC = 15;
 
 export default class NoteEditor extends React.PureComponent {
     state: State;
@@ -94,17 +97,23 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     newNote(): void {
+        this.save();
         this.setState(initState);
         this.titleInput.focus();
     }
 
     newNoteToday(): void {
         this.setState(initState);
-        this.setState({title: NoteEditor.toDateString(new Date())});
+        const dateStr = NoteEditor.toDateString(new Date());
+        this.setState({
+            title: dateStr,
+            content: '#' + dateStr,
+        });
         this.contentInput.focus();
     }
 
     open(id: NoteId): void {
+        this.save();
         ipcRenderer.once('GET_NOTE_REPLY', (event: Object, note: SavedNote) => {
             if (note.id != id) {
                 throw new Error('invalid note id');
@@ -168,6 +177,7 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     render() {
+        const canSaveNote = this.canSave();
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
         console.log('contentRows', contentRows);
@@ -193,25 +203,45 @@ export default class NoteEditor extends React.PureComponent {
                         margin: '8px',
                     }}
                 >
-                    <TextField
-                        name="titleInput"
-                        style={{
-                            margin: '8px',
-                            fontFamily: 'Monaco',
-                            fontSize: '13px',
-                        }}
-                        ref={input => {this.titleInput = input;}}
-                        hintText="Title"
-                        underlineShow={false}
-                        fullWidth={true}
-                        value={this.state.title}
-                        onChange={(e: Object, newValue: string) => {
-                            this.setState({
-                                title: newValue,
-                                modified: true,
-                            });
-                        }}
-                    />
+                    <div style={{width: '100%', display: 'flex'}}>
+                        <TextField
+                            name="titleInput"
+                            style={{
+                                margin: '8px',
+                                fontFamily: 'Monaco',
+                                fontSize: '13px',
+                            }}
+                            ref={input => {this.titleInput = input;}}
+                            hintText="Title"
+                            underlineShow={false}
+                            fullWidth={true}
+                            value={this.state.title}
+                            onChange={(e: Object, newValue: string) => {
+                                this.setState({
+                                    title: newValue,
+                                    modified: true,
+                                });
+                            }}
+                        />
+                        {this.state.id &&
+                        <IconMenu
+                            iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
+                            anchorOrigin={{horizontal: 'right', vertical: 'top'}}
+                            targetOrigin={{horizontal: 'right', vertical: 'top'}}
+                            style={{
+                                marginLeft: 'auto',
+                                marginRight: '8px',
+                                marginTop: '8px',
+                                marginBottom: '8px',
+                            }}
+                        >
+                            <MenuItem
+                                primaryText="Delete"
+                                onTouchTap={this.deleteNote.bind(this)}
+                            />
+                        </IconMenu>
+                        }
+                    </div>
                     <Divider/>
                     <div style={{
                         display: 'flex',
@@ -294,6 +324,7 @@ export default class NoteEditor extends React.PureComponent {
                     />
                     <Divider/>
                     <div style={{width: '100%', display: 'flex'}}>
+                        {/*
                         <FloatingActionButton
                             style={{margin: '8px'}}
                             onTouchTap={this.save.bind(this)}
@@ -301,38 +332,21 @@ export default class NoteEditor extends React.PureComponent {
                         >
                             <ContentSave />
                         </FloatingActionButton>
+                        */}
                         <FloatingActionButton
                             style={{margin: '8px'}}
                             onTouchTap={this.newNote.bind(this)}
-                            disabled={this.canSave()}
+                            disabled={!canSaveNote}
                         >
                             <ContentAdd />
                         </FloatingActionButton>
                         <FloatingActionButton
                             style={{margin: '8px'}}
                             onTouchTap={this.newNoteToday.bind(this)}
-                            disabled={this.canSave()}
+                            disabled={!canSaveNote}
                         >
                             <ActionToday />
                         </FloatingActionButton>
-                        {this.state.id &&
-                            <IconMenu
-                                iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
-                                anchorOrigin={{horizontal: 'right', vertical: 'top'}}
-                                targetOrigin={{horizontal: 'right', vertical: 'top'}}
-                                style={{
-                                    marginLeft: 'auto',
-                                    marginRight: '8px',
-                                    marginTop: '8px',
-                                    marginBottom: '8px',
-                                }}
-                            >
-                                <MenuItem
-                                    primaryText="Delete"
-                                    onTouchTap={this.deleteNote.bind(this)}
-                                />
-                            </IconMenu>
-                        }
                     </div>
                 </Paper>
                 <Snackbar
