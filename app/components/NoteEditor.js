@@ -219,18 +219,32 @@ export default class NoteEditor extends React.PureComponent {
                         onKeyDown={(e: Object) => {
                             console.log('keydown', e.key);
                             if (e.target.selectionStart !== e.target.selectionEnd) return;
-                            const pos = e.target.selectionStart;
                             if (e.key === 'Tab') {
-                                e.preventDefault();
                                 const TAB_SPACES = 2;
-                                // FIXME indent line
-                                const newContent = this.state.content.substring(0, pos) + ' '.repeat(TAB_SPACES) + this.state.content.substring(pos);
-                                this.setState({content: newContent}, () => {
-                                    this.contentInput.input.refs.input.selectionStart = pos + TAB_SPACES;
-                                    this.contentInput.input.refs.input.selectionEnd = pos + TAB_SPACES;
-                                });
+                                const pos = e.target.selectionStart;
+                                e.preventDefault();
+                                const content = this.state.content;
+                                const line = this.getLineInfo(pos, content);
+                                if (!e.shiftKey) {  // Tab
+                                    const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
+                                    const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
+                                    this.setState({content: newContent}, () => {
+                                        this.contentInput.input.refs.input.selectionStart = pos + numAdd;
+                                        this.contentInput.input.refs.input.selectionEnd = pos + numAdd;
+                                    });
+                                } else {    // Shift+Tab
+                                    if (line.indent > 0) {
+                                        const r: number = line.indent % TAB_SPACES;
+                                        const numRemove: number = (r === 0) ? TAB_SPACES : r;
+                                        const newContent = content.substring(0, line.posBegin) + content.substring(line.posBegin + numRemove);
+                                        this.setState({content: newContent}, () => {
+                                            this.contentInput.input.refs.input.selectionStart = pos - numRemove;
+                                            this.contentInput.input.refs.input.selectionEnd = pos - numRemove;
+                                        });
+
+                                    }
+                                }
                             }
-                            // TODO Shift+Tab
                         }}
                         onKeyUp={(e: Object) => {
                             //console.log('keyup', e.key);
