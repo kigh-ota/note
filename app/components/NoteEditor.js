@@ -151,7 +151,9 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     render() {
-        const numOfContentLines = (this.state.content.match(/\n/g) || []).length + 1;
+        const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
+        const contentRows: number = Math.max(6, numOfContentLines);
+        console.log('contentRows', contentRows);
         return (
             <div style={{ marginLeft: '250px' }}>
                 <Paper
@@ -194,8 +196,8 @@ export default class NoteEditor extends React.PureComponent {
                         hintText="Content"
                         underlineShow={false}
                         multiLine={true}
-                        rows={6}
-                        rowsMax={numOfContentLines}
+                        rows={contentRows}
+                        rowsMax={contentRows}
                         fullWidth={true}
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({
