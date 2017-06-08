@@ -153,7 +153,7 @@ export default class NoteEditor extends React.PureComponent {
     render() {
         const numOfContentLines = (this.state.content.match(/\n/g) || []).length + 1;
         return (
-            <div>
+            <div style={{ marginLeft: '250px' }}>
                 <Paper
                     zDepth={1}
                     rounded={false}

@@ -1,7 +1,8 @@
 // @flow
 import * as React from 'react';
 import {ipcRenderer} from 'electron';
-import {List, ListItem} from 'material-ui/List';
+import MenuItem from 'material-ui/MenuItem';
+import Drawer from 'material-ui/Drawer';
 import * as Immutable from 'immutable';
 
 import type {NoteId, SavedNote} from '../types/AppTypes';
@@ -36,8 +37,12 @@ export default class NoteViewer extends React.PureComponent {
                 throw new Error('no id in note');
             }
             return (
-                <ListItem
+                <MenuItem
                     key={note.id}
+                    style={{
+                        minHeight: '32px',
+                        lineHeight: '32px',
+                    }}
                     innerDivStyle={{
                         fontFamily: 'Monaco',
                         fontSize: '13px',
@@ -49,9 +54,13 @@ export default class NoteViewer extends React.PureComponent {
         });
 
         return (
-            <List>
+            <Drawer
+                width={250}
+                open={true}
+                docked={true}
+            >
                 {listItems}
-            </List>
+            </Drawer>
         );
     }
 }

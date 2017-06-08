@@ -15,11 +15,11 @@ export default class App extends React.Component {
         return (
             <MuiThemeProvider muiTheme={getMuiTheme(lightBaseTheme)}>
                 <div>
-                    <NoteEditor
-                        ref={node => { this.noteEditor = node; }}
-                    />
                     <NoteViewer
                         onSelectNote={(id: NoteId) => {this.noteEditor.open(id);}}
+                    />
+                    <NoteEditor
+                        ref={node => { this.noteEditor = node; }}
                     />
                 </div>
             </MuiThemeProvider>
