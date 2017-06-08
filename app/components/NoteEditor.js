@@ -122,13 +122,45 @@ export default class NoteEditor extends React.PureComponent {
         }
     }
 
+    getLineInfo(pos: number, str: string): {
+        str: string,
+        posBegin: number,
+        posEnd: number,
+        indent: number,
+    } {
+        let posBegin: number = pos;
+        while (posBegin > 0) {
+            if (str.charAt(posBegin - 1) === '\n') break;
+            posBegin--;
+        }
+        let posEnd: number = str.indexOf('\n', pos);
+        if (posEnd === -1) {
+            posEnd = str.length;
+        }
+        const line: string = str.slice(posBegin, posEnd);
+        let indent: number = 0;
+        for (; indent < line.length; indent++) {
+            if (line.charAt(indent) !== ' ') break;
+        }
+        return {
+            str: line,  // should not include \n
+            posBegin: posBegin,
+            posEnd: posEnd,
+            indent: indent,
+        };
+    }
+
     render() {
+        const numOfContentLines = (this.state.content.match(/\n/g) || []).length + 1;
+        // console.log(numOfContentLines);
         return (
             <div>
                 <Paper
                     zDepth={1}
                     rounded={false}
-                    style={{margin: '8px'}}
+                    style={{
+                        margin: '8px',
+                    }}
                 >
                     <TextField
                         name="titleInput"
@@ -147,21 +179,60 @@ export default class NoteEditor extends React.PureComponent {
                     />
                     <Divider/>
                     <TextField
+                        // separate as a component class
                         name="contentInput"
-                        style={{margin: '8px'}}
+                        style={{
+                            margin: '8px',
+                            fontFamily: 'Monaco',
+                            fontSize: '13px',
+                            lineHeight: '1.4em',
+                        }}
                         ref={input => {this.contentInput = input;}}
                         hintText="Content"
                         underlineShow={false}
                         multiLine={true}
                         rows={6}
+                        rowsMax={numOfContentLines}
                         fullWidth={true}
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({
                             content: newValue,
                             modified: true,
                         });}}
+                        onKeyPress={(e: Object) => {
+                            console.log('keypress', e.key);
+                            if (e.target.selectionStart !== e.target.selectionEnd) return;
+                            const pos = e.target.selectionStart;
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const prevLine = this.getLineInfo(pos - 1, this.state.content);
+                                const newContent = this.state.content.substring(0, pos) + '\n' + ' '.repeat(prevLine.indent) + this.state.content.substring(pos);
+                                this.setState({content: newContent}, () => {
+                                    this.contentInput.input.refs.input.selectionStart = pos + prevLine.indent + 1;
+                                    this.contentInput.input.refs.input.selectionEnd = pos + prevLine.indent + 1;
+                                });
+                            }
+                        }}
+                        onKeyDown={(e: Object) => {
+                            console.log('keydown', e.key);
+                            if (e.target.selectionStart !== e.target.selectionEnd) return;
+                            const pos = e.target.selectionStart;
+                            if (e.key === 'Tab') {
+                                e.preventDefault();
+                                const TAB_SPACES = 2;
+                                // FIXME indent line
+                                const newContent = this.state.content.substring(0, pos) + ' '.repeat(TAB_SPACES) + this.state.content.substring(pos);
+                                this.setState({content: newContent}, () => {
+                                    this.contentInput.input.refs.input.selectionStart = pos + TAB_SPACES;
+                                    this.contentInput.input.refs.input.selectionEnd = pos + TAB_SPACES;
+                                });
+                            }
+                            // TODO Shift+Tab
+                        }}
                         onKeyUp={(e: Object) => {
-                            console.log(e.target.selectionStart, e.target.selectionEnd);
+                            //console.log('keyup', e.key);
+                            if (e.target.selectionStart !== e.target.selectionEnd) return;
+                            //const pos = e.target.selectionStart;
                         }}
                     />
                     <Divider/>
