@@ -11,11 +11,14 @@ import Paper from 'material-ui/Paper';
 import Divider from 'material-ui/Divider';
 import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
+import Chip from 'material-ui/Chip';
 import IconButton from 'material-ui/IconButton';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import padStart from 'string.prototype.padstart';
+import {OrderedSet} from 'immutable';
 
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
+import type {Set} from 'immutable';
 
 padStart.shim();
 
@@ -34,6 +37,8 @@ const initState: State = {
     modified: false,
     autoSaveNotify: false,
 };
+
+type Tag = string;
 
 const AUTO_SAVE_INTERVAL_SEC = 5;
 
@@ -150,10 +155,35 @@ export default class NoteEditor extends React.PureComponent {
         };
     }
 
+    static parseTags(content: string): Set<Tag> {
+        return OrderedSet(
+            content.split('\n').filter(line => {
+                return line.match(/^#\S+$/);
+            }).map(line => {
+                return line.substring(1);
+            }).filter(tag => {
+                return !tag.includes('#');
+            })
+        );
+    }
+
     render() {
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
         console.log('contentRows', contentRows);
+
+        const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
+            return (
+                <Chip
+                    key={key}
+                    style={{margin: 4}}
+                    labelStyle={{fontFamily: 'Monaco', fontSize: '11px'}}
+                >
+                    {tag}
+                </Chip>
+            );
+        });
+
         return (
             <div style={{ marginLeft: '250px' }}>
                 <Paper
@@ -182,6 +212,14 @@ export default class NoteEditor extends React.PureComponent {
                             });
                         }}
                     />
+                    <Divider/>
+                    <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        minHeight: 10,
+                    }}>
+                        {tagChips}
+                    </div>
                     <Divider/>
                     <TextField
                         // separate as a component class

@@ -11,3 +11,18 @@ describe('#toDateString', () => {
         assert.equal(NoteEditor.toDateString(new Date(2000, 11, 31)), '2000-12-31');
     });
 });
+
+describe('#parseTags', () => {
+    it('parses', () => {
+        const tagArray = NoteEditor.parseTags(`
+#1
+hoge
+# a
+#タグ
+#1
+#a#
+#タグ2
+`).toArray();
+        assert.deepEqual(tagArray, ['1', 'タグ', 'タグ2']);
+    });
+});
