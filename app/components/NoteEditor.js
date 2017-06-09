@@ -66,7 +66,7 @@ export default class NoteEditor extends React.PureComponent {
         return note;
     }
 
-    canSave(): boolean {
+    shouldSave(): boolean {
         return (!!this.state.title || !!this.state.content) && this.state.modified;
     }
 
@@ -86,7 +86,7 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     save(): void {
-        if (this.canSave()) {
+        if (this.shouldSave()) {   // 保存の必要がなければ保存しない
             ipcRenderer.send('SAVE_NOTE', this.noteObject());
             this.setState({modified: false});
         }
@@ -177,7 +177,6 @@ export default class NoteEditor extends React.PureComponent {
     }
 
     render() {
-        const canSaveNote = this.canSave();
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
         console.log('contentRows', contentRows);
@@ -336,14 +335,14 @@ export default class NoteEditor extends React.PureComponent {
                         <FloatingActionButton
                             style={{margin: '8px'}}
                             onTouchTap={this.newNote.bind(this)}
-                            disabled={!canSaveNote}
+                            disabled={false}
                         >
                             <ContentAdd />
                         </FloatingActionButton>
                         <FloatingActionButton
                             style={{margin: '8px'}}
                             onTouchTap={this.newNoteToday.bind(this)}
-                            disabled={!canSaveNote}
+                            disabled={false}
                         >
                             <ActionToday />
                         </FloatingActionButton>
