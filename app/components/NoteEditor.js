@@ -48,6 +48,7 @@ const initState: State = {
 
 type Tag = string;
 
+const TAB_SPACES = 2;
 const AUTO_SAVE_INTERVAL_SEC = 15;
 
 export default class NoteEditor extends React.PureComponent {
@@ -197,7 +198,6 @@ export default class NoteEditor extends React.PureComponent {
     render() {
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
-        console.log('contentRows', contentRows);
 
         const lineStart: number = this.state.content.substring(0, this.state.selectionStart).split('\n').length;
         const lineEnd: number = this.state.content.substring(0, this.state.selectionEnd).split('\n').length;
@@ -312,11 +312,10 @@ export default class NoteEditor extends React.PureComponent {
                         onKeyDown={(e: Object) => {
                             console.log('keydown', e.key);
                             if (e.target.selectionStart !== e.target.selectionEnd) return;
+                            const pos = e.target.selectionStart;
+                            const content = this.state.content;
                             if (e.key === 'Tab') {
-                                const TAB_SPACES = 2;
-                                const pos = e.target.selectionStart;
                                 e.preventDefault();
-                                const content = this.state.content;
                                 const line = NoteEditor.getLineInfo(pos, content);
                                 if (!e.shiftKey) {  // Tab
                                     const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
@@ -336,6 +335,19 @@ export default class NoteEditor extends React.PureComponent {
                                         });
 
                                     }
+                                }
+                            } else if (e.key === 'Backspace') { // BS
+                                const line = NoteEditor.getLineInfo(pos, content);
+                                const col: number = pos - line.posBegin;
+                                if (line.indent > 0 && 0 < col && col <= line.indent) {
+                                    e.preventDefault();
+                                    const r = col % TAB_SPACES;
+                                    const numRemove = (r === 0) ? TAB_SPACES : r;
+                                    const newContent = content.substring(0, pos - numRemove) + content.substring(pos);
+                                    this.setState({content: newContent}, () => {
+                                        this.contentInput.input.refs.input.selectionStart = pos - numRemove;
+                                        this.contentInput.input.refs.input.selectionEnd = pos - numRemove;
+                                    });
                                 }
                             }
                         }}
