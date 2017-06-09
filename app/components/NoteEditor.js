@@ -141,11 +141,13 @@ export default class NoteEditor extends React.PureComponent {
         }
     }
 
-    getLineInfo(pos: number, str: string): {
+    // TODO add tests
+    static getLineInfo(pos: number, str: string): {
         str: string,
         posBegin: number,
         posEnd: number,
         indent: number,
+        bullet: '' | '* ' | '- ' | '・',
     } {
         let posBegin: number = pos;
         while (posBegin > 0) {
@@ -161,11 +163,17 @@ export default class NoteEditor extends React.PureComponent {
         for (; indent < line.length; indent++) {
             if (line.charAt(indent) !== ' ') break;
         }
+        // seek bullet
+        let bulletFound = '';
+        ['* ', '- ', '・'].forEach(bullet => {
+            if (line.length >= indent + bullet.length && line.substr(indent, bullet.length) === bullet) bulletFound = bullet;
+        });
         return {
             str: line,  // should not include \n
             posBegin: posBegin,
             posEnd: posEnd,
             indent: indent,
+            bullet: bulletFound,
         };
     }
 
@@ -193,6 +201,8 @@ export default class NoteEditor extends React.PureComponent {
 
         const lineStart: number = this.state.content.substring(0, this.state.selectionStart).split('\n').length;
         const lineEnd: number = this.state.content.substring(0, this.state.selectionEnd).split('\n').length;
+        const lineInfoStart = NoteEditor.getLineInfo(this.state.selectionStart, this.state.content);
+        const lineInfoEnd = NoteEditor.getLineInfo(this.state.selectionEnd, this.state.content);
 
         const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
             return (
@@ -290,7 +300,7 @@ export default class NoteEditor extends React.PureComponent {
                             const pos = e.target.selectionStart;
                             if (e.key === 'Enter') {
                                 e.preventDefault(); // FIXME 現状、改行のundoができない。
-                                const prevLine = this.getLineInfo(pos, this.state.content);
+                                const prevLine = NoteEditor.getLineInfo(pos, this.state.content);
                                 const newContent = this.state.content.substring(0, pos) + '\n' + ' '.repeat(prevLine.indent) + this.state.content.substring(pos);
                                 this.setState({content: newContent}, () => {
                                     this.contentInput.input.refs.input.selectionStart = pos + prevLine.indent + 1;
@@ -306,7 +316,7 @@ export default class NoteEditor extends React.PureComponent {
                                 const pos = e.target.selectionStart;
                                 e.preventDefault();
                                 const content = this.state.content;
-                                const line = this.getLineInfo(pos, content);
+                                const line = NoteEditor.getLineInfo(pos, content);
                                 if (!e.shiftKey) {  // Tab
                                     const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
                                     const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
@@ -379,7 +389,11 @@ export default class NoteEditor extends React.PureComponent {
                     fontSize: '10px',
                     color: grey500,
                 }}>
-                    {`[${this.state.selectionStart}:L${lineStart},${this.state.selectionEnd}:L${lineEnd}](${numOfContentLines} lines)`}
+                    {
+                        `[${this.state.selectionStart}:L${lineStart}(${lineInfoStart.indent})${lineInfoStart.bullet},`
+                        + `${this.state.selectionEnd}:L${lineEnd}(${lineInfoEnd.indent})${lineInfoEnd.bullet}]`
+                        + `(${numOfContentLines} lines)`
+                    }
                 </div>
             </div>
         );
