@@ -301,10 +301,11 @@ export default class NoteEditor extends React.PureComponent {
                             if (e.key === 'Enter') {
                                 e.preventDefault(); // FIXME 現状、改行のundoができない。
                                 const prevLine = NoteEditor.getLineInfo(pos, this.state.content);
-                                const newContent = this.state.content.substring(0, pos) + '\n' + ' '.repeat(prevLine.indent) + this.state.content.substring(pos);
+                                const strInsert: string = '\n' + ' '.repeat(prevLine.indent) + prevLine.bullet;
+                                const newContent: string = this.state.content.substring(0, pos) + strInsert + this.state.content.substring(pos);
                                 this.setState({content: newContent}, () => {
-                                    this.contentInput.input.refs.input.selectionStart = pos + prevLine.indent + 1;
-                                    this.contentInput.input.refs.input.selectionEnd = pos + prevLine.indent + 1;
+                                    this.contentInput.input.refs.input.selectionStart = pos + strInsert.length;
+                                    this.contentInput.input.refs.input.selectionEnd = pos + strInsert.length;
                                 });
                             }
                         }}
