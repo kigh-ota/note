@@ -31,7 +31,7 @@ export default class NoteViewer extends React.PureComponent {
     }
 
     render() {
-        console.log(this.state.notes);
+        // console.log(this.state.notes);
         const listItems = this.state.notes.sortBy(note => note.dtUpdated).reverse().map(note => {
             if (!note.hasOwnProperty('id')) {
                 throw new Error('no id in note');
@@ -47,7 +47,7 @@ export default class NoteViewer extends React.PureComponent {
                         fontFamily: 'Monaco',
                         fontSize: '13px',
                     }}
-                    primaryText={`[${note.id ? note.id.toString() : ''}] ${note.title}`}
+                    primaryText={`${note.title}`}
                     onTouchTap={this.props.onSelectNote.bind(this, note.id)}
                 />
             );
