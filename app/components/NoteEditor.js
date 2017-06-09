@@ -299,9 +299,9 @@ export default class NoteEditor extends React.PureComponent {
                             if (e.target.selectionStart !== e.target.selectionEnd) return;
                             const pos = e.target.selectionStart;
                             if (e.key === 'Enter') {
-                                e.preventDefault(); // FIXME 現状、改行のundoができない。
-                                const prevLine = NoteEditor.getLineInfo(pos, this.state.content);
-                                const strInsert: string = '\n' + ' '.repeat(prevLine.indent) + prevLine.bullet;
+                                e.preventDefault(); // FIXME 現状、改行のundoができない。contentとカーソル位置のスナップショットを取るなど
+                                const line = NoteEditor.getLineInfo(pos, this.state.content);
+                                const strInsert: string = '\n' + ' '.repeat(line.indent) + line.bullet;
                                 const newContent: string = this.state.content.substring(0, pos) + strInsert + this.state.content.substring(pos);
                                 this.setState({content: newContent}, () => {
                                     this.contentInput.input.refs.input.selectionStart = pos + strInsert.length;
