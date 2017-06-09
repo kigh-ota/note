@@ -12,6 +12,7 @@ import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
 import Chip from 'material-ui/Chip';
 import IconButton from 'material-ui/IconButton';
+import {grey500} from 'material-ui/styles/colors';
 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import ContentAdd from 'material-ui/svg-icons/content/add';
@@ -31,6 +32,8 @@ type State = {
     content: string,
     modified: boolean,
     autoSaveNotify: boolean,
+    selectionStart: number,
+    selectionEnd: number,
 };
 
 const initState: State = {
@@ -39,6 +42,8 @@ const initState: State = {
     content: '',
     modified: false,
     autoSaveNotify: false,
+    selectionStart: 0,
+    selectionEnd: 0,
 };
 
 type Tag = string;
@@ -176,10 +181,18 @@ export default class NoteEditor extends React.PureComponent {
         );
     }
 
+    setSelectionStates(input: Object) {
+        this.setState({selectionStart: input.selectionStart});
+        this.setState({selectionEnd: input.selectionEnd});
+    }
+
     render() {
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
         console.log('contentRows', contentRows);
+
+        const lineStart: number = this.state.content.substring(0, this.state.selectionStart).split('\n').length;
+        const lineEnd: number = this.state.content.substring(0, this.state.selectionEnd).split('\n').length;
 
         const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
             return (
@@ -316,9 +329,10 @@ export default class NoteEditor extends React.PureComponent {
                             }
                         }}
                         onKeyUp={(e: Object) => {
-                            //console.log('keyup', e.key);
-                            if (e.target.selectionStart !== e.target.selectionEnd) return;
-                            //const pos = e.target.selectionStart;
+                            this.setSelectionStates(e.target);
+                        }}
+                        onMouseUp={(e: Object) => {
+                            this.setSelectionStates(e.target);
                         }}
                     />
                     <Divider/>
@@ -354,6 +368,19 @@ export default class NoteEditor extends React.PureComponent {
                     autoHideDuration={2500}
                     onRequestClose={() => {this.setState({autoSaveNotify: false});}}
                 />
+                <div style={{
+                    width: '100%',
+                    height: 20,
+                    position: 'fixed',
+                    right: 5,
+                    bottom: 5,
+                    textAlign: 'right',
+                    fontFamily: 'Monaco',
+                    fontSize: '10px',
+                    color: grey500,
+                }}>
+                    {`[${this.state.selectionStart}:L${lineStart},${this.state.selectionEnd}:L${lineEnd}](${numOfContentLines} lines)`}
+                </div>
             </div>
         );
     }
