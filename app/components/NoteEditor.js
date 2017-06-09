@@ -121,7 +121,7 @@ export default class NoteEditor extends React.PureComponent {
         const dateStr = NoteEditor.toDateString(new Date());
         this.setState({
             title: dateStr,
-            content: '#' + dateStr,
+            content: '#' + dateStr + '\n',
         });
         this.contentInput.focus();
     }
