@@ -3,9 +3,9 @@
 export type LineInfo = {
     str: string,
     posBegin: number,
-    posEnd: number,
+    posEnd: number, // (index of the last character of str) + 1
     col: number,
-    num: number,    // 行番号
+    num: number,    // 行番号(1-)
     indent: number,
     bullet: '' | '* ' | '- ' | '・',
 };
@@ -13,6 +13,9 @@ export type LineInfo = {
 const TAB_SPACES = 2;
 
 function getLineInfo_(pos: number, str: string): LineInfo {
+    if (pos > str.length) {
+        throw new Error('invalid cursor position');
+    }
     let posBegin: number = pos;
     while (posBegin > 0) {
         if (str.charAt(posBegin - 1) === '\n') break;
@@ -77,7 +80,6 @@ function changeIndentRangeInner_(str: string, posStart: number, posEnd: number, 
 }
 
 export default class StringUtil {
-    // TODO add tests
     static getLineInfo(pos: number, str: string): LineInfo {
         return getLineInfo_(pos, str);
     }
