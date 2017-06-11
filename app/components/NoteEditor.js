@@ -198,17 +198,21 @@ export default class NoteEditor extends React.PureComponent {
         this.setState({selectionEnd: input.selectionEnd});
     }
 
+    static decreaseIndentString(n: number, content: string, line: LineInfo): string {
+        return content.substring(0, line.posBegin) + content.substring(line.posBegin + n);
+    }
+
     decreaseIndent(pos: number, line: LineInfo): void {
         const r = line.indent % TAB_SPACES;
         const numRemove = (r === 0) ? TAB_SPACES : r;
-        const newContent = this.state.content.substring(0, line.posBegin) + this.state.content.substring(line.posBegin + numRemove);
+        const newContent = NoteEditor.decreaseIndentString(numRemove, this.state.content, line);
         this.setState({content: newContent}, () => {
             this.contentInput.input.refs.input.selectionStart = pos - numRemove;
             this.contentInput.input.refs.input.selectionEnd = pos - numRemove;
         });
     }
 
-    insertString(str: string, pos: number): void {
+    insert(str: string, pos: number): void {
         const newContent: string = this.state.content.substring(0, pos) + str + this.state.content.substring(pos);
         this.setState({content: newContent}, () => {
             this.contentInput.input.refs.input.selectionStart = pos + str.length;
@@ -335,7 +339,7 @@ export default class NoteEditor extends React.PureComponent {
                                 } else {
                                     // インデント・bulletがあれば引き継いで改行
                                     const strInsert: string = '\n' + ' '.repeat(line.indent) + line.bullet;
-                                    this.insertString(strInsert, pos);
+                                    this.insert(strInsert, pos);
                                 }
                             }
                         }}
