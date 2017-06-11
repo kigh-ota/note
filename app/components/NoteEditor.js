@@ -52,6 +52,7 @@ type LineInfo = {
     posBegin: number,
     posEnd: number,
     col: number,
+    num: number,    // 行番号
     indent: number,
     bullet: '' | '* ' | '- ' | '・',
 };
@@ -176,6 +177,7 @@ export default class NoteEditor extends React.PureComponent {
             posBegin: posBegin,
             posEnd: posEnd,
             col: pos - posBegin,
+            num: str.substring(0, pos).split('\n').length,
             indent: indent,
             bullet: bulletFound,
         };
@@ -198,17 +200,50 @@ export default class NoteEditor extends React.PureComponent {
         this.setState({selectionEnd: input.selectionEnd});
     }
 
-    static decreaseIndentString(n: number, content: string, line: LineInfo): string {
-        return content.substring(0, line.posBegin) + content.substring(line.posBegin + n);
+    static changeIndentString(n: number, content: string, line: LineInfo): string {
+        if (n > 0) {
+            return content.substring(0, line.posBegin) + ' '.repeat(n) + content.substring(line.posBegin);
+        } else if (n < 0) {
+            n = -n;
+            if (n > line.indent) {
+                throw new Error();
+            }
+            return content.substring(0, line.posBegin) + content.substring(line.posBegin + n);
+        }
+        return content;
+    }
+
+    // インデントを一段上げた文字列を返す
+    static increaseIndentString(content: string, line: LineInfo): {updated: string, numAdd: number} {
+        const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
+        return {
+            updated: NoteEditor.changeIndentString(numAdd, content, line),
+            numAdd: numAdd
+        };
+    }
+
+    // インデントを一段下げた文字列を返す
+    static decreaseIndentString(content: string, line: LineInfo): {updated: string, numRemove: number} {
+        if (line.indent === 0) {
+            return {
+                updated: content,
+                numRemove: 0,
+            };
+        }
+        const r = line.indent % TAB_SPACES;
+        const numRemove = (r === 0) ? TAB_SPACES : r;
+        return {
+            updated: NoteEditor.changeIndentString(-numRemove, content, line),
+            numRemove: numRemove
+        };
     }
 
     decreaseIndent(pos: number, line: LineInfo): void {
-        const r = line.indent % TAB_SPACES;
-        const numRemove = (r === 0) ? TAB_SPACES : r;
-        const newContent = NoteEditor.decreaseIndentString(numRemove, this.state.content, line);
-        this.setState({content: newContent}, () => {
-            this.contentInput.input.refs.input.selectionStart = pos - numRemove;
-            this.contentInput.input.refs.input.selectionEnd = pos - numRemove;
+        const ret = NoteEditor.decreaseIndentString(this.state.content, line);
+        const numCursorMove = Math.min(ret.numRemove, line.indent);
+        this.setState({content: ret.updated}, () => {
+            this.contentInput.input.refs.input.selectionStart = pos - numCursorMove;
+            this.contentInput.input.refs.input.selectionEnd = pos - numCursorMove;
         });
     }
 
@@ -224,10 +259,8 @@ export default class NoteEditor extends React.PureComponent {
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
 
-        const lineStart: number = this.state.content.substring(0, this.state.selectionStart).split('\n').length;
-        const lineEnd: number = this.state.content.substring(0, this.state.selectionEnd).split('\n').length;
-        const lineInfoStart = NoteEditor.getLineInfo(this.state.selectionStart, this.state.content);
-        const lineInfoEnd = NoteEditor.getLineInfo(this.state.selectionEnd, this.state.content);
+        const lineStart = NoteEditor.getLineInfo(this.state.selectionStart, this.state.content);
+        const lineEnd = NoteEditor.getLineInfo(this.state.selectionEnd, this.state.content);
 
         const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
             return (
@@ -345,22 +378,65 @@ export default class NoteEditor extends React.PureComponent {
                         }}
                         onKeyDown={(e: Object) => {
                             console.log('keydown', e.key);
-                            const content = this.state.content;
                             if (e.target.selectionStart !== e.target.selectionEnd) {
                                 // 範囲選択中
-                                // TODO 選択範囲中の行のインデントを変更
+                                const posStart = e.target.selectionStart;
+                                const posEnd = e.target.selectionEnd;
+                                if (e.key === 'Tab') {
+                                    e.preventDefault();
+                                    let content: string = this.state.content;
+                                    const lineStart = NoteEditor.getLineInfo(posStart, content);
+                                    const lineEnd = NoteEditor.getLineInfo(posEnd, content);
+                                    if (!e.shiftKey) {   // Tab
+                                        let line = NoteEditor.getLineInfo(posStart, content);
+                                        let addPosStart = 0;
+                                        let addPosEnd = 0;
+                                        while (true) {  // eslint-disable-line no-constant-condition
+                                            const ret = NoteEditor.increaseIndentString(content, line);
+                                            content = ret.updated;
+                                            if (line.num === lineStart.num) addPosStart += ret.numAdd;
+                                            addPosEnd += ret.numAdd;
+                                            if (line.num === lineEnd.num) {
+                                                break;
+                                            }
+                                            line = NoteEditor.getLineInfo(line.posEnd + ret.numAdd + 1, content);    // next line
+                                        }
+                                        this.setState({content: content}, () => {
+                                            this.contentInput.input.refs.input.selectionStart = posStart + addPosStart;
+                                            this.contentInput.input.refs.input.selectionEnd = posEnd + addPosEnd;
+                                        });
+                                    } else {   // Shift+Tab
+                                        let line = NoteEditor.getLineInfo(posStart, content);
+                                        let removePosStart = 0;
+                                        let removePosEnd = 0;
+                                        while (true) {  // eslint-disable-line no-constant-condition
+                                            const ret = NoteEditor.decreaseIndentString(content, line);
+                                            content = ret.updated;
+                                            if (line.num === lineStart.num) removePosStart += ret.numRemove;
+                                            removePosEnd += ret.numRemove;
+                                            if (line.num === lineEnd.num) {
+                                                break;
+                                            }
+                                            line = NoteEditor.getLineInfo(line.posEnd - ret.numRemove + 1, content);    // next line
+                                        }
+                                        this.setState({content: content}, () => {
+                                            this.contentInput.input.refs.input.selectionStart = posStart - removePosStart;
+                                            this.contentInput.input.refs.input.selectionEnd = posEnd - removePosEnd;
+                                        });
+                                    }
+                                }
                             } else {
                                 // 範囲選択してないとき
-                                const pos = e.target.selectionStart;
+                                const pos: number = e.target.selectionStart;
+                                const content: string = this.state.content;
                                 if (e.key === 'Tab') {
                                     e.preventDefault();
                                     const line = NoteEditor.getLineInfo(pos, content);
                                     if (!e.shiftKey) {  // Tab
-                                        const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
-                                        const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
-                                        this.setState({content: newContent}, () => {
-                                            this.contentInput.input.refs.input.selectionStart = pos + numAdd;
-                                            this.contentInput.input.refs.input.selectionEnd = pos + numAdd;
+                                        const ret = NoteEditor.increaseIndentString(content, line);
+                                        this.setState({content: ret.updated}, () => {
+                                            this.contentInput.input.refs.input.selectionStart = pos + ret.numAdd;
+                                            this.contentInput.input.refs.input.selectionEnd = pos + ret.numAdd;
                                         });
                                     } else {    // Shift+Tab
                                         if (line.indent > 0) {
@@ -429,8 +505,8 @@ export default class NoteEditor extends React.PureComponent {
                     color: grey500,
                 }}>
                     {
-                        `[${this.state.selectionStart}:L${lineStart}(${lineInfoStart.indent})${lineInfoStart.bullet},`
-                        + `${this.state.selectionEnd}:L${lineEnd}(${lineInfoEnd.indent})${lineInfoEnd.bullet}]`
+                        `[${this.state.selectionStart}:L${lineStart.num}(${lineStart.indent})${lineStart.bullet},`
+                        + `${this.state.selectionEnd}:L${lineEnd.num}(${lineEnd.indent})${lineEnd.bullet}]`
                         + `(${numOfContentLines} lines)`
                     }
                 </div>
