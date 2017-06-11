@@ -207,9 +207,7 @@ export default class NoteEditor extends React.PureComponent {
                 <Paper
                     zDepth={1}
                     rounded={false}
-                    style={{
-                        margin: '8px',
-                    }}
+                    style={{margin: '8px'}}
                 >
                     <div style={{width: '100%', display: 'flex'}}>
                         <TextField
@@ -231,24 +229,7 @@ export default class NoteEditor extends React.PureComponent {
                                 });
                             }}
                         />
-                        {this.state.id &&
-                        <IconMenu
-                            iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
-                            anchorOrigin={{horizontal: 'right', vertical: 'top'}}
-                            targetOrigin={{horizontal: 'right', vertical: 'top'}}
-                            style={{
-                                marginLeft: 'auto',
-                                marginRight: '8px',
-                                marginTop: '8px',
-                                marginBottom: '8px',
-                            }}
-                        >
-                            <MenuItem
-                                primaryText="Delete"
-                                onTouchTap={this.deleteNote.bind(this)}
-                            />
-                        </IconMenu>
-                        }
+                        {this.state.id && <DeleteMenu onTouchTap={this.deleteNote.bind(this)} />}
                     </div>
                     <Divider/>
                     <div style={{
@@ -346,20 +327,8 @@ export default class NoteEditor extends React.PureComponent {
                     />
                     <Divider/>
                     <div style={{width: '100%', display: 'flex'}}>
-                        <FloatingActionButton
-                            style={{margin: '8px'}}
-                            onTouchTap={this.newNote.bind(this)}
-                            disabled={false}
-                        >
-                            <ContentAdd />
-                        </FloatingActionButton>
-                        <FloatingActionButton
-                            style={{margin: '8px'}}
-                            onTouchTap={this.newNoteToday.bind(this)}
-                            disabled={false}
-                        >
-                            <ActionToday />
-                        </FloatingActionButton>
+                        <NewNoteButton onTouchTap={this.newNote.bind(this)}/>
+                        <NewNoteTodayButton onTouchTap={this.newNoteToday.bind(this)}/>
                     </div>
                 </Paper>
                 <Snackbar
@@ -387,5 +356,50 @@ export default class NoteEditor extends React.PureComponent {
                 </div>
             </div>
         );
+
+        function NewNoteButton(props) {
+            return (
+                <FloatingActionButton
+                    style={{margin: '8px'}}
+                    onTouchTap={props.onTouchTap}
+                    disabled={false}
+                >
+                    <ContentAdd />
+                </FloatingActionButton>
+            );
+        }
+
+        function NewNoteTodayButton(props) {
+            return (
+                <FloatingActionButton
+                    style={{margin: '8px'}}
+                    onTouchTap={props.onTouchTap}
+                    disabled={false}
+                >
+                    <ActionToday />
+                </FloatingActionButton>
+            );
+        }
+
+        function DeleteMenu(props) {
+            return (
+                <IconMenu
+                    iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
+                    anchorOrigin={{horizontal: 'right', vertical: 'top'}}
+                    targetOrigin={{horizontal: 'right', vertical: 'top'}}
+                    style={{
+                        marginLeft: 'auto',
+                        marginRight: '8px',
+                        marginTop: '8px',
+                        marginBottom: '8px',
+                    }}
+                >
+                    <MenuItem
+                        primaryText="Delete"
+                        onTouchTap={props.onTouchTap}
+                    />
+                </IconMenu>
+            );
+        }
     }
 }
