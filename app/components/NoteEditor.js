@@ -161,19 +161,27 @@ export default class NoteEditor extends React.PureComponent {
         this.setState({selectionEnd: input.selectionEnd});
     }
 
+    updateContent(content: string, selectionStart: number, selectionEnd?: number): void {
+        this.setState({
+            content: content,
+            selectionStart: selectionStart,
+            selectionEnd: (typeof selectionEnd === 'undefined') ? selectionStart : selectionEnd,
+        }, this.updateSelection.bind(this, selectionStart, selectionEnd));
+    }
+
     decreaseIndent(pos: number): void {
         const ret = StringUtil.decreaseIndent(this.state.content, pos);
-        this.setState({content: ret.updated}, this.updateSelection.bind(this, pos - ret.numRemove));
+        this.updateContent(ret.updated, pos - ret.numRemove);
     }
 
     removeBullet(pos: number, line: LineInfo): void {
         const newContent = this.state.content.substring(0, pos - line.bullet.length) + this.state.content.substring(pos);
-        this.setState({content: newContent}, this.updateSelection.bind(this, pos - line.bullet.length));
+        this.updateContent(newContent, pos - line.bullet.length);
     }
 
     insert(str: string, pos: number): void {
         const newContent: string = this.state.content.substring(0, pos) + str + this.state.content.substring(pos);
-        this.setState({content: newContent}, this.updateSelection.bind(this, pos + str.length));
+        this.updateContent(newContent, pos + str.length);
     }
 
     updateSelection(start: number, end?: number): void {
@@ -261,6 +269,8 @@ export default class NoteEditor extends React.PureComponent {
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({
                             content: newValue,
+                            selectionStart: e.target.selectionStart,
+                            selectionEnd: e.target.selectionEnd,
                             modified: true,
                         });}}
                         onKeyPress={(e: Object) => {
@@ -293,10 +303,10 @@ export default class NoteEditor extends React.PureComponent {
                                     e.preventDefault();
                                     if (!e.shiftKey) {   // Tab
                                         const ret = StringUtil.increaseIndentRange(this.state.content, posStart, posEnd);
-                                        this.setState({content: ret.updated}, this.updateSelection.bind(this, posStart + ret.numAddStart, posEnd + ret.numAddEnd));
+                                        this.updateContent(ret.updated, posStart + ret.numAddStart, posEnd + ret.numAddEnd);
                                     } else {   // Shift+Tab
                                         const ret = StringUtil.decreaseIndentRange(this.state.content, posStart, posEnd);
-                                        this.setState({content: ret.updated}, this.updateSelection.bind(this, posStart - ret.numRemoveStart, posEnd - ret.numRemoveStart));
+                                        this.updateContent(ret.updated, posStart - ret.numRemoveStart, posEnd - ret.numRemoveStart);
                                     }
                                 }
                             } else {
@@ -306,7 +316,7 @@ export default class NoteEditor extends React.PureComponent {
                                     e.preventDefault();
                                     if (!e.shiftKey) {  // Tab
                                         const ret = StringUtil.increaseIndent(this.state.content, pos);
-                                        this.setState({content: ret.updated}, this.updateSelection.bind(this, pos + ret.numAdd));
+                                        this.updateContent(ret.updated, pos + ret.numAdd);
                                     } else {    // Shift+Tab
                                         this.decreaseIndent(pos);
                                     }
