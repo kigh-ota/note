@@ -341,30 +341,35 @@ export default class NoteEditor extends React.PureComponent {
                         }}
                         onKeyDown={(e: Object) => {
                             console.log('keydown', e.key);
-                            if (e.target.selectionStart !== e.target.selectionEnd) return;
-                            const pos = e.target.selectionStart;
                             const content = this.state.content;
-                            if (e.key === 'Tab') {
-                                e.preventDefault();
-                                const line = NoteEditor.getLineInfo(pos, content);
-                                if (!e.shiftKey) {  // Tab
-                                    const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
-                                    const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
-                                    this.setState({content: newContent}, () => {
-                                        this.contentInput.input.refs.input.selectionStart = pos + numAdd;
-                                        this.contentInput.input.refs.input.selectionEnd = pos + numAdd;
-                                    });
-                                } else {    // Shift+Tab
-                                    if (line.indent > 0) {
+                            if (e.target.selectionStart !== e.target.selectionEnd) {
+                                // 範囲選択中
+                                // TODO 選択範囲中の行のインデントを変更
+                            } else {
+                                // 範囲選択してないとき
+                                const pos = e.target.selectionStart;
+                                if (e.key === 'Tab') {
+                                    e.preventDefault();
+                                    const line = NoteEditor.getLineInfo(pos, content);
+                                    if (!e.shiftKey) {  // Tab
+                                        const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
+                                        const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
+                                        this.setState({content: newContent}, () => {
+                                            this.contentInput.input.refs.input.selectionStart = pos + numAdd;
+                                            this.contentInput.input.refs.input.selectionEnd = pos + numAdd;
+                                        });
+                                    } else {    // Shift+Tab
+                                        if (line.indent > 0) {
+                                            this.decreaseIndent(pos, line);
+                                        }
+                                    }
+                                } else if (e.key === 'Backspace') { // BS
+                                    const line = NoteEditor.getLineInfo(pos, content);
+                                    if (line.indent > 0 && 0 < line.col && line.col <= line.indent) {
+                                        // インデントの途中 or 直後：インデント下げ
+                                        e.preventDefault();
                                         this.decreaseIndent(pos, line);
                                     }
-                                }
-                            } else if (e.key === 'Backspace') { // BS
-                                const line = NoteEditor.getLineInfo(pos, content);
-                                if (line.indent > 0 && 0 < line.col && line.col <= line.indent) {
-                                    // インデントの途中 or 直後：インデント下げ
-                                    e.preventDefault();
-                                    this.decreaseIndent(pos, line);
                                 }
                             }
                         }}
