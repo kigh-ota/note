@@ -129,6 +129,8 @@ export default class NoteEditor extends React.PureComponent {
                 title: note.title,
                 content: note.content,
                 modified: false,
+                selectionStart: 0,
+                selectionEnd: 0,
             });
         });
         ipcRenderer.send('GET_NOTE', id);
