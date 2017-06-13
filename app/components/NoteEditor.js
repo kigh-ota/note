@@ -278,17 +278,27 @@ export default class NoteEditor extends React.PureComponent {
                             if (e.target.selectionStart !== e.target.selectionEnd) return;
                             const pos = e.target.selectionStart;
                             if (e.key === 'Enter') {
-                                e.preventDefault(); // FIXME 現状、改行のundoができない。contentとカーソル位置のスナップショットを取るなど
+                                // TODO extract into handleEnterKey()
                                 const line = StringUtil.getLineInfo(pos, this.state.content);
-                                if (line.indent > 0 && line.col === line.indent) {
-                                    // インデントの直後：インデント下げ
+                                if (line.col === line.str.length && line.indent > 0 && line.str.length === line.indent) {
+                                    // when there's indent only and the cursor is at the end of line
+                                    e.preventDefault();
                                     this.decreaseIndent(pos);
-                                } else if (line.bullet && line.col === line.indent + line.bullet.length) {
-                                    // bulletの直後：bullet削除
+                                } else if (line.bullet && line.str.length === line.indent + line.bullet.length && line.str.length === line.indent) {
+                                    // when there's indent and bullet only and the cursor is at the end of line
+                                    e.preventDefault();
                                     this.removeBullet(pos, line);
-                                } else {
-                                    // インデント・bulletがあれば引き継いで改行
+                                } else if (line.col >= line.indent + line.bullet.length) {
+                                    // when the cursor is after the indent and bullet (if exists)
+                                    // => continues indent and bullet (if exists)
+                                    e.preventDefault();
                                     const strInsert: string = '\n' + ' '.repeat(line.indent) + line.bullet;
+                                    this.insert(strInsert, pos);
+                                } else if (line.bullet && line.col === line.indent) {
+                                    // when the cursor is between indent and bullet
+                                    // => continues only the indent
+                                    e.preventDefault();
+                                    const strInsert: string = '\n' + ' '.repeat(line.indent);
                                     this.insert(strInsert, pos);
                                 }
                             }
