@@ -267,12 +267,18 @@ export default class NoteEditor extends React.PureComponent {
                         rowsMax={contentRows}
                         fullWidth={true}
                         value={this.state.content}
-                        onChange={(e: Object, newValue: string) => {this.setState({
-                            content: newValue,
-                            selectionStart: e.target.selectionStart,
-                            selectionEnd: e.target.selectionEnd,
-                            modified: true,
-                        });}}
+                        onChange={(e: Object, newValue: string) => {
+                            const newValueRep = newValue.replace('　', '  ');
+                            const diffChar = newValueRep.length - newValue.length;
+                            const newSelectionStart = e.target.selectionStart + diffChar;
+                            const newSelectionEnd = e.target.selectionEnd + diffChar;
+                            this.setState({
+                                content: newValueRep,
+                                selectionStart: newSelectionStart,
+                                selectionEnd: newSelectionEnd,
+                                modified: true,
+                            }, this.updateSelection.bind(this, newSelectionStart, newSelectionEnd));
+                        }}
                         onKeyPress={(e: Object) => {
                             console.log('keypress', e.key);
                             if (e.target.selectionStart !== e.target.selectionEnd) return;
