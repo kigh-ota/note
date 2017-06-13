@@ -23,6 +23,6 @@ hoge
 #a#
 #タグ2
 `).toArray();
-        assert.deepEqual(tagArray, ['1', 'タグ', 'タグ2']);
+        assert.deepStrictEqual(tagArray, ['1', 'タグ', 'タグ2']);
     });
 });

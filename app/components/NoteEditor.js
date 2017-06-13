@@ -1,6 +1,9 @@
 // @flow
 import * as React from 'react';
 import {ipcRenderer} from 'electron';
+import padStart from 'string.prototype.padstart';
+import {OrderedSet} from 'immutable';
+import StringUtil from '../utils/StringUtil';
 
 import TextField from 'material-ui/TextField';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
@@ -18,11 +21,9 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ActionToday from 'material-ui/svg-icons/action/today';
 
-import padStart from 'string.prototype.padstart';
-import {OrderedSet} from 'immutable';
-
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
 import type {Set} from 'immutable';
+import type {LineInfo}  from '../utils/StringUtil';
 
 padStart.shim();
 
@@ -47,16 +48,7 @@ const initState: State = {
 };
 
 type Tag = string;
-type LineInfo = {
-    str: string,
-    posBegin: number,
-    posEnd: number,
-    col: number,
-    indent: number,
-    bullet: '' | '* ' | '- ' | '・',
-};
 
-const TAB_SPACES = 2;
 const AUTO_SAVE_INTERVAL_SEC = 15;
 
 export default class NoteEditor extends React.PureComponent {
@@ -129,7 +121,7 @@ export default class NoteEditor extends React.PureComponent {
     open(id: NoteId): void {
         this.save();
         ipcRenderer.once('GET_NOTE_REPLY', (event: Object, note: SavedNote) => {
-            if (note.id != id) {
+            if (note.id !== id) {
                 throw new Error('invalid note id');
             }
             this.setState({
@@ -137,6 +129,8 @@ export default class NoteEditor extends React.PureComponent {
                 title: note.title,
                 content: note.content,
                 modified: false,
+                selectionStart: 0,
+                selectionEnd: 0,
             });
         });
         ipcRenderer.send('GET_NOTE', id);
@@ -148,37 +142,6 @@ export default class NoteEditor extends React.PureComponent {
             this.setState(initState);
             this.titleInput.focus();
         }
-    }
-
-    // TODO add tests
-    static getLineInfo(pos: number, str: string): LineInfo {
-        let posBegin: number = pos;
-        while (posBegin > 0) {
-            if (str.charAt(posBegin - 1) === '\n') break;
-            posBegin--;
-        }
-        let posEnd: number = str.indexOf('\n', pos);
-        if (posEnd === -1) {
-            posEnd = str.length;
-        }
-        const line: string = str.slice(posBegin, posEnd);
-        let indent: number = 0;
-        for (; indent < line.length; indent++) {
-            if (line.charAt(indent) !== ' ') break;
-        }
-        // seek bullet
-        let bulletFound = '';
-        ['* ', '- ', '・'].forEach(bullet => {
-            if (line.length >= indent + bullet.length && line.substr(indent, bullet.length) === bullet) bulletFound = bullet;
-        });
-        return {
-            str: line,  // should not include \n
-            posBegin: posBegin,
-            posEnd: posEnd,
-            col: pos - posBegin,
-            indent: indent,
-            bullet: bulletFound,
-        };
     }
 
     static parseTags(content: string): Set<Tag> {
@@ -198,32 +161,44 @@ export default class NoteEditor extends React.PureComponent {
         this.setState({selectionEnd: input.selectionEnd});
     }
 
-    decreaseIndent(pos: number, line: LineInfo): void {
-        const r = line.indent % TAB_SPACES;
-        const numRemove = (r === 0) ? TAB_SPACES : r;
-        const newContent = this.state.content.substring(0, line.posBegin) + this.state.content.substring(line.posBegin + numRemove);
-        this.setState({content: newContent}, () => {
-            this.contentInput.input.refs.input.selectionStart = pos - numRemove;
-            this.contentInput.input.refs.input.selectionEnd = pos - numRemove;
-        });
+    updateContent(content: string, selectionStart: number, selectionEnd?: number): void {
+        this.setState({
+            content: content,
+            selectionStart: selectionStart,
+            selectionEnd: (typeof selectionEnd === 'undefined') ? selectionStart : selectionEnd,
+        }, this.updateSelection.bind(this, selectionStart, selectionEnd));
     }
 
-    insertString(str: string, pos: number): void {
+    decreaseIndent(pos: number): void {
+        const ret = StringUtil.decreaseIndent(this.state.content, pos);
+        this.updateContent(ret.updated, pos - ret.numRemove);
+    }
+
+    removeBullet(pos: number, line: LineInfo): void {
+        const newContent = this.state.content.substring(0, pos - line.bullet.length) + this.state.content.substring(pos);
+        this.updateContent(newContent, pos - line.bullet.length);
+    }
+
+    insert(str: string, pos: number): void {
         const newContent: string = this.state.content.substring(0, pos) + str + this.state.content.substring(pos);
-        this.setState({content: newContent}, () => {
-            this.contentInput.input.refs.input.selectionStart = pos + str.length;
-            this.contentInput.input.refs.input.selectionEnd = pos + str.length;
-        });
+        this.updateContent(newContent, pos + str.length);
+    }
+
+    updateSelection(start: number, end?: number): void {
+        this.contentInput.input.refs.input.selectionStart = start;
+        if (typeof end !== 'undefined') {
+            this.contentInput.input.refs.input.selectionEnd = end;
+        } else {
+            this.contentInput.input.refs.input.selectionEnd = start;
+        }
     }
 
     render() {
         const numOfContentLines: number = (this.state.content.match(/\n/g) || []).length + 1;
         const contentRows: number = Math.max(6, numOfContentLines);
 
-        const lineStart: number = this.state.content.substring(0, this.state.selectionStart).split('\n').length;
-        const lineEnd: number = this.state.content.substring(0, this.state.selectionEnd).split('\n').length;
-        const lineInfoStart = NoteEditor.getLineInfo(this.state.selectionStart, this.state.content);
-        const lineInfoEnd = NoteEditor.getLineInfo(this.state.selectionEnd, this.state.content);
+        const lineStart = StringUtil.getLineInfo(this.state.selectionStart, this.state.content);
+        const lineEnd = StringUtil.getLineInfo(this.state.selectionEnd, this.state.content);
 
         const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
             return (
@@ -242,9 +217,7 @@ export default class NoteEditor extends React.PureComponent {
                 <Paper
                     zDepth={1}
                     rounded={false}
-                    style={{
-                        margin: '8px',
-                    }}
+                    style={{margin: '8px'}}
                 >
                     <div style={{width: '100%', display: 'flex'}}>
                         <TextField
@@ -266,24 +239,7 @@ export default class NoteEditor extends React.PureComponent {
                                 });
                             }}
                         />
-                        {this.state.id &&
-                        <IconMenu
-                            iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
-                            anchorOrigin={{horizontal: 'right', vertical: 'top'}}
-                            targetOrigin={{horizontal: 'right', vertical: 'top'}}
-                            style={{
-                                marginLeft: 'auto',
-                                marginRight: '8px',
-                                marginTop: '8px',
-                                marginBottom: '8px',
-                            }}
-                        >
-                            <MenuItem
-                                primaryText="Delete"
-                                onTouchTap={this.deleteNote.bind(this)}
-                            />
-                        </IconMenu>
-                        }
+                        {this.state.id && <DeleteMenu onTouchTap={this.deleteNote.bind(this)} />}
                     </div>
                     <Divider/>
                     <div style={{
@@ -313,6 +269,8 @@ export default class NoteEditor extends React.PureComponent {
                         value={this.state.content}
                         onChange={(e: Object, newValue: string) => {this.setState({
                             content: newValue,
+                            selectionStart: e.target.selectionStart,
+                            selectionEnd: e.target.selectionEnd,
                             modified: true,
                         });}}
                         onKeyPress={(e: Object) => {
@@ -321,50 +279,54 @@ export default class NoteEditor extends React.PureComponent {
                             const pos = e.target.selectionStart;
                             if (e.key === 'Enter') {
                                 e.preventDefault(); // FIXME 現状、改行のundoができない。contentとカーソル位置のスナップショットを取るなど
-                                const line = NoteEditor.getLineInfo(pos, this.state.content);
+                                const line = StringUtil.getLineInfo(pos, this.state.content);
                                 if (line.indent > 0 && line.col === line.indent) {
                                     // インデントの直後：インデント下げ
-                                    this.decreaseIndent(pos, line);
+                                    this.decreaseIndent(pos);
                                 } else if (line.bullet && line.col === line.indent + line.bullet.length) {
                                     // bulletの直後：bullet削除
-                                    const newContent = this.state.content.substring(0, pos - line.bullet.length) + this.state.content.substring(pos);
-                                    this.setState({content: newContent}, () => {
-                                        this.contentInput.input.refs.input.selectionStart = pos - line.bullet.length;
-                                        this.contentInput.input.refs.input.selectionEnd = pos - line.bullet.length;
-                                    });
+                                    this.removeBullet(pos, line);
                                 } else {
                                     // インデント・bulletがあれば引き継いで改行
                                     const strInsert: string = '\n' + ' '.repeat(line.indent) + line.bullet;
-                                    this.insertString(strInsert, pos);
+                                    this.insert(strInsert, pos);
                                 }
                             }
                         }}
                         onKeyDown={(e: Object) => {
                             console.log('keydown', e.key);
-                            if (e.target.selectionStart !== e.target.selectionEnd) return;
-                            const pos = e.target.selectionStart;
-                            const content = this.state.content;
-                            if (e.key === 'Tab') {
-                                e.preventDefault();
-                                const line = NoteEditor.getLineInfo(pos, content);
-                                if (!e.shiftKey) {  // Tab
-                                    const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
-                                    const newContent = content.substring(0, line.posBegin) + ' '.repeat(numAdd) + content.substring(line.posBegin);
-                                    this.setState({content: newContent}, () => {
-                                        this.contentInput.input.refs.input.selectionStart = pos + numAdd;
-                                        this.contentInput.input.refs.input.selectionEnd = pos + numAdd;
-                                    });
-                                } else {    // Shift+Tab
-                                    if (line.indent > 0) {
-                                        this.decreaseIndent(pos, line);
+                            if (e.target.selectionStart !== e.target.selectionEnd) {
+                                // 範囲選択中
+                                const posStart = e.target.selectionStart;
+                                const posEnd = e.target.selectionEnd;
+                                if (e.key === 'Tab') {
+                                    e.preventDefault();
+                                    if (!e.shiftKey) {   // Tab
+                                        const ret = StringUtil.increaseIndentRange(this.state.content, posStart, posEnd);
+                                        this.updateContent(ret.updated, posStart + ret.numAddStart, posEnd + ret.numAddEnd);
+                                    } else {   // Shift+Tab
+                                        const ret = StringUtil.decreaseIndentRange(this.state.content, posStart, posEnd);
+                                        this.updateContent(ret.updated, posStart - ret.numRemoveStart, posEnd - ret.numRemoveStart);
                                     }
                                 }
-                            } else if (e.key === 'Backspace') { // BS
-                                const line = NoteEditor.getLineInfo(pos, content);
-                                if (line.indent > 0 && 0 < line.col && line.col <= line.indent) {
-                                    // インデントの途中 or 直後：インデント下げ
+                            } else {
+                                // 範囲選択してないとき
+                                const pos: number = e.target.selectionStart;
+                                if (e.key === 'Tab') {
                                     e.preventDefault();
-                                    this.decreaseIndent(pos, line);
+                                    if (!e.shiftKey) {  // Tab
+                                        const ret = StringUtil.increaseIndent(this.state.content, pos);
+                                        this.updateContent(ret.updated, pos + ret.numAdd);
+                                    } else {    // Shift+Tab
+                                        this.decreaseIndent(pos);
+                                    }
+                                } else if (e.key === 'Backspace') { // BS
+                                    const line = StringUtil.getLineInfo(pos, this.state.content);
+                                    if (line.indent > 0 && 0 < line.col && line.col <= line.indent) {
+                                        // インデントの途中 or 直後：インデント下げ
+                                        e.preventDefault();
+                                        this.decreaseIndent(pos);
+                                    }
                                 }
                             }
                         }}
@@ -377,29 +339,8 @@ export default class NoteEditor extends React.PureComponent {
                     />
                     <Divider/>
                     <div style={{width: '100%', display: 'flex'}}>
-                        {/*
-                        <FloatingActionButton
-                            style={{margin: '8px'}}
-                            onTouchTap={this.save.bind(this)}
-                            disabled={!this.canSave()}
-                        >
-                            <ContentSave />
-                        </FloatingActionButton>
-                        */}
-                        <FloatingActionButton
-                            style={{margin: '8px'}}
-                            onTouchTap={this.newNote.bind(this)}
-                            disabled={false}
-                        >
-                            <ContentAdd />
-                        </FloatingActionButton>
-                        <FloatingActionButton
-                            style={{margin: '8px'}}
-                            onTouchTap={this.newNoteToday.bind(this)}
-                            disabled={false}
-                        >
-                            <ActionToday />
-                        </FloatingActionButton>
+                        <NewNoteButton onTouchTap={this.newNote.bind(this)}/>
+                        <NewNoteTodayButton onTouchTap={this.newNoteToday.bind(this)}/>
                     </div>
                 </Paper>
                 <Snackbar
@@ -420,12 +361,57 @@ export default class NoteEditor extends React.PureComponent {
                     color: grey500,
                 }}>
                     {
-                        `[${this.state.selectionStart}:L${lineStart}(${lineInfoStart.indent})${lineInfoStart.bullet},`
-                        + `${this.state.selectionEnd}:L${lineEnd}(${lineInfoEnd.indent})${lineInfoEnd.bullet}]`
+                        `[${this.state.selectionStart}:L${lineStart.num}(${lineStart.indent})${lineStart.bullet},`
+                        + `${this.state.selectionEnd}:L${lineEnd.num}(${lineEnd.indent})${lineEnd.bullet}]`
                         + `(${numOfContentLines} lines)`
                     }
                 </div>
             </div>
         );
+
+        function NewNoteButton(props) {
+            return (
+                <FloatingActionButton
+                    style={{margin: '8px'}}
+                    onTouchTap={props.onTouchTap}
+                    disabled={false}
+                >
+                    <ContentAdd />
+                </FloatingActionButton>
+            );
+        }
+
+        function NewNoteTodayButton(props) {
+            return (
+                <FloatingActionButton
+                    style={{margin: '8px'}}
+                    onTouchTap={props.onTouchTap}
+                    disabled={false}
+                >
+                    <ActionToday />
+                </FloatingActionButton>
+            );
+        }
+
+        function DeleteMenu(props) {
+            return (
+                <IconMenu
+                    iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
+                    anchorOrigin={{horizontal: 'right', vertical: 'top'}}
+                    targetOrigin={{horizontal: 'right', vertical: 'top'}}
+                    style={{
+                        marginLeft: 'auto',
+                        marginRight: '8px',
+                        marginTop: '8px',
+                        marginBottom: '8px',
+                    }}
+                >
+                    <MenuItem
+                        primaryText="Delete"
+                        onTouchTap={props.onTouchTap}
+                    />
+                </IconMenu>
+            );
+        }
     }
 }
