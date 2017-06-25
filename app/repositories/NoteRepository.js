@@ -8,17 +8,21 @@ const SQL = {
         'title TEXT NOT NULL,' +
         'content TEXT NOT NULL,' +
         'dtCreated TEXT NOT NULL,' + // ISO8601
-        'dtUpdated TEXT NOT NULL' +  // ISO8601
+        'dtUpdated TEXT NOT NULL,' +  // ISO8601
+        'deleted BOOLEAN NOT NULL' +
         ')',
     CREATE_INDEX: 'CREATE INDEX IF NOT EXISTS titleIndex ON ' + TABLE + '(title)',
     INSERT: 'INSERT INTO ' + TABLE + ' ' +
-        '(id, title, content, dtCreated, dtUpdated) ' +
-        'VALUES(NULL, $title, $content, $dtCreated, $dtUpdated)',
+        '(id, title, content, dtCreated, dtUpdated, deleted) ' +
+        'VALUES(NULL, $title, $content, $dtCreated, $dtUpdated, 0)',
     UPDATE: 'UPDATE ' + TABLE + ' ' +
         'SET title=$title, content=$content, dtUpdated=$dtUpdated WHERE id=$id',
     DELETE: 'DELETE FROM ' + TABLE + ' WHERE id=$id',
+    LOGICAL_DELETE: 'UPDATE ' + TABLE + ' ' +
+        'SET deleted=1 WHERE id=$id',
     SELECT: 'SELECT * FROM ' + TABLE + ' WHERE id=$id',
     SELECT_ALL: 'SELECT * FROM ' + TABLE,
+    SELECT_ALL_NOT_DELETED: 'SELECT * FROM ' + TABLE + ' WHERE deleted = 0',
 };
 
 export default class NoteRepository {
@@ -40,6 +44,10 @@ export default class NoteRepository {
 
     static selectAll_(): Promise<any[]> {
         return db.all(SQL.SELECT_ALL);
+    }
+
+    static selectAllNotDeleted_(): Promise<any[]> {
+        return db.all(SQL.SELECT_ALL_NOT_DELETED);
     }
 
     static insert_(title: string, content: string): Promise<Statement> {
@@ -64,5 +72,9 @@ export default class NoteRepository {
 
     static delete_(id: number): Promise<Statement> {
         return db.run(SQL.DELETE, {$id: id});
+    }
+
+    static deleteLogically_(id: number): Promise<Statement> {
+        return db.run(SQL.LOGICAL_DELETE, {$id: id});
     }
 }

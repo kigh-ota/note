@@ -33,7 +33,7 @@ function createWindow(): void {
 }
 
 function sendNotesToRenderer_(event: Object): Promise<boolean> {
-    return NoteRepository.selectAll_().then(rows => {
+    return NoteRepository.selectAllNotDeleted_().then(rows => {
         event.sender.send('REFRESH_NOTES', rows);
         return true;
     }).catch(() => {
@@ -77,7 +77,7 @@ function getNote(event: Object, id: NoteId): Promise<boolean> {
 }
 
 function deleteNote(event: Object, id: NoteId): Promise<boolean> {
-    return NoteRepository.delete_(id).then(() => {
+    return NoteRepository.deleteLogically_(id).then(() => {
         return sendNotesToRenderer_(event);
     }).catch(() => {
         console.log(`Failed to delete the note (id=${id})`);
