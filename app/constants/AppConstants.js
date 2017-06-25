@@ -7,5 +7,5 @@ export const AppModes = {
 export const DbFileName = {
     DEVELOPMENT: 'note.db',
     PRODUCTION: 'note.db',
-    TEST: 'note-test.db',
+    TEST: ':memory:',
 };

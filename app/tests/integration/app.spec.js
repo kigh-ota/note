@@ -3,15 +3,15 @@
 /* eslint-disable no-unused-vars */
 import {Application} from 'spectron';
 import electron from 'electron';
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';
+// import path from 'path';
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import {AppModes, DbFileName} from '../../constants/AppConstants';
+import {AppModes/*, DbFileName*/} from '../../constants/AppConstants';
 
-function getDocumentPath(app): Promise<string> {
-    return app.electron.remote.app.getPath('documents');
-}
+// function getDocumentPath(app): Promise<string> {
+//     return app.electron.remote.app.getPath('documents');
+// }
 
 describe('application launch', function () {
     this.timeout(10000);
@@ -28,16 +28,16 @@ describe('application launch', function () {
     });
 
     afterEach(() => {
-        return getDocumentPath(this.app).then(docPath => {
-            fs.unlink(path.join(docPath, DbFileName.TEST), (err) => {
-                if (err) throw err;
-                console.log('successfully deleted test db');
-            });
-        }).then(() => {
-            if (this.app && this.app.isRunning()) {
-                return this.app.stop();
-            }
-        });
+        // return getDocumentPath(this.app).then(docPath => {
+        //     fs.unlink(path.join(docPath, DbFileName.TEST), (err) => {
+        //         if (err) throw err;
+        //         console.log('successfully deleted test db');
+        //     });
+        // }).then(() => {
+        if (this.app && this.app.isRunning()) {
+            return this.app.stop();
+        }
+        // });
     });
 
     it('shows an initial window', () => {
@@ -46,10 +46,10 @@ describe('application launch', function () {
         });
     });
 
-    it('creates test db', () => {
-        return getDocumentPath(this.app).then(docPath => {
-            const stats = fs.statSync(path.join(docPath, DbFileName.TEST));
-            assert.ok(stats.isFile());
-        });
-    });
+    // it('creates test db', () => {
+    //     return getDocumentPath(this.app).then(docPath => {
+    //         const stats = fs.statSync(path.join(docPath, DbFileName.TEST));
+    //         assert.ok(stats.isFile());
+    //     });
+    // });
 });
