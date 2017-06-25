@@ -3,10 +3,11 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import url from 'url';
 import AppUtil from './utils/AppUtil';
-import {AppModes, DbFileName} from './constants/AppConstants';
+import {AppModes, DB_FILENAME} from './constants/AppConstants';
 import type {AppModeType, Note, NoteId} from './types/AppTypes';
 import db from 'sqlite';
 import sqlite3 from 'sqlite3';
+import DBMigrate from 'db-migrate';
 import NoteRepository from './repositories/NoteRepository';
 
 const appMode: AppModeType = AppUtil.getAppMode();
@@ -86,14 +87,21 @@ function deleteNote(event: Object, id: NoteId): Promise<boolean> {
 }
 
 app.on('ready', () => {
-    return db.open(
-        path.join(app.getPath('documents'), DbFileName[appMode]),
-        {
+    const dbPath: string = path.join(app.getPath('documents'), DB_FILENAME);
+    const dbm = DBMigrate.getInstance(true, {
+        object: {
+            development: { driver: 'sqlite3', filename: dbPath },
+            production: { driver: 'sqlite3', filename: dbPath },
+            test: { driver: 'sqlite3', filename: ':memory:' },
+        },
+        env: appMode,
+    });
+    return dbm.up().then(() => {
+        // Open database file
+        return db.open(dbPath, {
             mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
             verbose: true,
-        }
-    ).then(() => {
-        return Promise.all([NoteRepository.init()]);
+        });
     }).then(() => {
 
         ipcMain.on('SAVE_NOTE', saveNote);
@@ -102,7 +110,7 @@ app.on('ready', () => {
         ipcMain.on('DELETE_NOTE', deleteNote);
 
         createWindow();
-        return Promise.resolve();
+        return true;
     });
 });
 

@@ -4,8 +4,4 @@ export const AppModes = {
     DEVELOPMENT: 'DEVELOPMENT',
     TEST: 'TEST',
 };
-export const DbFileName = {
-    DEVELOPMENT: 'note.db',
-    PRODUCTION: 'note.db',
-    TEST: ':memory:',
-};
+export const DB_FILENAME: string = 'note.db';

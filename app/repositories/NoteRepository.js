@@ -22,7 +22,7 @@ const SQL = {
 };
 
 export default class NoteRepository {
-    static init(): Promise<void> {
+    static init(): Promise<void> {  // used only for testing
         return this.createTable_().then(this.createIndex_);
     }
 
