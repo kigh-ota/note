@@ -3,7 +3,7 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import url from 'url';
 import AppUtil from './utils/AppUtil';
-import {AppModes, DbFileName} from './constants/AppConstants';
+import {AppModes} from './constants/AppConstants';
 import type {AppModeType, Note, NoteId} from './types/AppTypes';
 import db from 'sqlite';
 import sqlite3 from 'sqlite3';
@@ -86,13 +86,15 @@ function deleteNote(event: Object, id: NoteId): Promise<boolean> {
 }
 
 app.on('ready', () => {
-    return db.open(
-        path.join(app.getPath('documents'), DbFileName[appMode]),
-        {
-            mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
-            verbose: true,
-        }
-    ).then(() => {
+    const DbFileName = {
+        DEVELOPMENT: path.join(app.getPath('documents'), 'note.db'),
+        PRODUCTION: path.join(app.getPath('documents'), 'note.db'),
+        TEST: ':memory:',
+    };
+    return db.open(DbFileName[appMode], {
+        mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
+        verbose: true,
+    }).then(() => {
         return Promise.all([NoteRepository.init()]);
     }).then(() => {
 
