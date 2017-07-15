@@ -200,7 +200,14 @@ export default class NoteEditor extends React.PureComponent {
         });
 
         return (
-            <div className="note-editor" style={{ marginLeft: '250px' }}>
+            <div
+                className="note-editor" style={{ marginLeft: '250px' }}
+                onKeyDown={(e: Object) => {
+                    if ((e.key === 'S' || e.key === 's') && e.ctrlKey) { // Ctrl+S
+                        this.save();
+                    }
+                }}
+            >
                 <Paper
                     zDepth={1}
                     rounded={false}

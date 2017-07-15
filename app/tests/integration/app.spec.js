@@ -53,18 +53,23 @@ describe('application launch', function () {
     //     });
     // });
 
-    it('add notes', () => {
+    it('add a note', () => {
         const client = this.app.client;
-        return client.elements('.note-list .note-list-item').then(result => {
+        const SELECTOR_NOTE_LIST_ITEM = '.note-list .note-list-item';
+        return client.elements(SELECTOR_NOTE_LIST_ITEM).then(result => {
             assert.deepStrictEqual(result.value, []);
-        }).then(() => {
-            return client.click('.note-editor .note-title-input');
-        }).then(() => {
-            return client.keys('TEST');
-        }).then(() => {
-            return client.getValue('.note-editor .note-title-input input[name=titleInput]');
+            return client
+                .click('.note-editor .note-title-input')
+                .keys('TEST')
+                .getValue('.note-editor .note-title-input input[name=titleInput]');
         }).then(value => {
             assert.equal(value, 'TEST');
+            return client
+                .keys(['Control', 's', '\uE000'])
+                .pause(50)
+                .elements(SELECTOR_NOTE_LIST_ITEM);
+        }).then(result => {
+            assert.equal(result.value.length, 1);
         });
     });
 });
