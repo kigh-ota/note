@@ -21,6 +21,8 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ActionToday from 'material-ui/svg-icons/action/today';
 
+import {AppStyles} from '../constants/AppConstants';
+
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
 import type {Set} from 'immutable';
 import type {LineInfo}  from '../utils/StringUtil';
@@ -222,11 +224,7 @@ export default class NoteEditor extends React.PureComponent {
                     <div style={{width: '100%', display: 'flex'}}>
                         <TextField
                             name="titleInput"
-                            style={{
-                                margin: '8px',
-                                fontFamily: 'Monaco',
-                                fontSize: '13px',
-                            }}
+                            style={Object.assign({}, {margin: '8px'}, AppStyles.textBase)}
                             ref={input => {this.titleInput = input;}}
                             hintText="Title"
                             underlineShow={false}
@@ -253,12 +251,10 @@ export default class NoteEditor extends React.PureComponent {
                     <TextField
                         // separate as a component class
                         name="contentInput"
-                        style={{
+                        style={Object.assign({}, {
                             margin: '8px',
-                            fontFamily: 'Monaco',
-                            fontSize: '13px',
                             lineHeight: '1.4em',
-                        }}
+                        }, AppStyles.textBase)}
                         ref={input => {this.contentInput = input;}}
                         hintText="Content"
                         underlineShow={false}
@@ -365,17 +361,16 @@ export default class NoteEditor extends React.PureComponent {
                     autoHideDuration={2500}
                     onRequestClose={() => {this.setState({autoSaveNotify: false});}}
                 />
-                <div style={{
+                <div style={Object.assign({}, AppStyles.textBase, {
                     width: '100%',
                     height: 20,
                     position: 'fixed',
                     right: 5,
                     bottom: 5,
                     textAlign: 'right',
-                    fontFamily: 'Monaco',
                     fontSize: '10px',
                     color: grey500,
-                }}>
+                })}>
                     {
                         `[${this.state.selectionStart}:L${lineStart.num}(${lineStart.indent})${lineStart.bullet},`
                         + `${this.state.selectionEnd}:L${lineEnd.num}(${lineEnd.indent})${lineEnd.bullet}]`

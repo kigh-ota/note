@@ -6,6 +6,8 @@ import Drawer from 'material-ui/Drawer';
 import TextField from 'material-ui/TextField';
 import * as Immutable from 'immutable';
 
+import {AppStyles} from '../constants/AppConstants';
+
 import type {NoteId, SavedNote} from '../types/AppTypes';
 
 type Props = {
@@ -45,33 +47,30 @@ export default class NoteViewer extends React.PureComponent {
                 <MenuItem
                     key={note.id}
                     style={{
-                        minHeight: '32px',
-                        lineHeight: '32px',
+                        minHeight: (AppStyles.textBase.fontSize + 8) + 'px',
+                        lineHeight: (AppStyles.textBase.fontSize + 8) + 'px',
                     }}
-                    innerDivStyle={{
-                        fontFamily: 'Monaco',
-                        fontSize: '13px',
-                    }}
+                    innerDivStyle={AppStyles.textBase}
                     primaryText={`${note.title}`}
                     onTouchTap={this.props.onSelectNote.bind(this, note.id)}
                 />
             );
         });
 
+        const drawerWidth: number = 250;
+
         return (
             <Drawer
-                width={250}
+                width={drawerWidth}
                 open={true}
                 docked={true}
             >
                 <TextField
                     name="noteFilterInput"
-                    style={{
+                    style={Object.assign({}, {
                         margin: '0 8px',
-                        width: 250 - 16,
-                        fontFamily: 'Monaco',
-                        fontSize: '13px',
-                    }}
+                        width: drawerWidth - 16,
+                    }, AppStyles.textBase)}
                     hintText="Filter"
                     value={this.state.filterInputValue}
                     onChange={(e: Object, newValue: string) => {
