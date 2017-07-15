@@ -20,3 +20,5 @@ export type SavedNote = {
     dtCreated: string,
     dtUpdated: string,
 }
+
+export type Tag = string;

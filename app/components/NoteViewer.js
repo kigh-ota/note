@@ -8,7 +8,9 @@ import * as Immutable from 'immutable';
 
 import {AppStyles} from '../constants/AppConstants';
 
-import type {NoteId, SavedNote} from '../types/AppTypes';
+import type {NoteId, SavedNote, Tag} from '../types/AppTypes';
+import NoteUtil from '../utils/NoteUtil';
+import {OrderedSet} from '../../node_modules/immutable/dist/immutable';
 
 type Props = {
     onSelectNote: (NoteId) => void,
@@ -37,25 +39,36 @@ export default class NoteViewer extends React.PureComponent {
         ipcRenderer.send('FETCH_NOTES');
     }
 
+    applyFilter(note: SavedNote): boolean {
+        if (this.state.filterInputValue === '') {
+            return true;    // no filter
+        }
+        return (note.title.toLocaleLowerCase().indexOf(this.state.filterInputValue.toLocaleLowerCase()) !== -1); // filter by title (case-insensitive)
+    }
+
     render() {
         // console.log(this.state.notes);
-        const listItems = this.state.notes.sortBy(note => note.dtUpdated).reverse().map(note => {
-            if (!note.hasOwnProperty('id')) {
-                throw new Error('no id in note');
-            }
-            return (
-                <MenuItem
-                    key={note.id}
-                    style={{
-                        minHeight: (AppStyles.textBase.fontSize + 8) + 'px',
-                        lineHeight: (AppStyles.textBase.fontSize + 8) + 'px',
-                    }}
-                    innerDivStyle={AppStyles.textBase}
-                    primaryText={`${note.title}`}
-                    onTouchTap={this.props.onSelectNote.bind(this, note.id)}
-                />
-            );
-        });
+        const listItems = this.state.notes
+            .filter(note => this.applyFilter(note))
+            .sortBy(note => note.dtUpdated)
+            .reverse()
+            .map(note => {
+                if (!note.hasOwnProperty('id')) {
+                    throw new Error('no id in note');
+                }
+                return (
+                    <MenuItem
+                        key={note.id}
+                        style={{
+                            minHeight: (AppStyles.textBase.fontSize + 8) + 'px',
+                            lineHeight: (AppStyles.textBase.fontSize + 8) + 'px',
+                        }}
+                        innerDivStyle={AppStyles.textBase}
+                        primaryText={`${note.title}`}
+                        onTouchTap={this.props.onSelectNote.bind(this, note.id)}
+                    />
+                );
+            });
 
         const drawerWidth: number = 250;
 

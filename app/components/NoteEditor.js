@@ -2,7 +2,6 @@
 import * as React from 'react';
 import {ipcRenderer} from 'electron';
 import padStart from 'string.prototype.padstart';
-import {OrderedSet} from 'immutable';
 import StringUtil from '../utils/StringUtil';
 
 import TextField from 'material-ui/TextField';
@@ -24,8 +23,8 @@ import ActionToday from 'material-ui/svg-icons/action/today';
 import {AppStyles} from '../constants/AppConstants';
 
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
-import type {Set} from 'immutable';
 import type {LineInfo}  from '../utils/StringUtil';
+import NoteUtil from '../utils/NoteUtil';
 
 padStart.shim();
 
@@ -48,8 +47,6 @@ const initState: State = {
     selectionStart: 0,
     selectionEnd: 0,
 };
-
-type Tag = string;
 
 const AUTO_SAVE_INTERVAL_SEC = 15;
 
@@ -146,18 +143,6 @@ export default class NoteEditor extends React.PureComponent {
         }
     }
 
-    static parseTags(content: string): Set<Tag> {
-        return OrderedSet(
-            content.split('\n').filter(line => {
-                return line.match(/^#\S+$/);
-            }).map(line => {
-                return line.substring(1);
-            }).filter(tag => {
-                return !tag.includes('#');
-            })
-        );
-    }
-
     setSelectionStates(input: Object): void {
         this.setState({selectionStart: input.selectionStart});
         this.setState({selectionEnd: input.selectionEnd});
@@ -202,7 +187,7 @@ export default class NoteEditor extends React.PureComponent {
         const lineStart = StringUtil.getLineInfo(this.state.selectionStart, this.state.content);
         const lineEnd = StringUtil.getLineInfo(this.state.selectionEnd, this.state.content);
 
-        const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
+        const tagChips = NoteUtil.parseTags(this.state.content).map((tag, key) => {
             return (
                 <Chip
                     key={key}
