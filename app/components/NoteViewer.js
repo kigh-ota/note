@@ -12,9 +12,7 @@ import ContentClear from 'material-ui/svg-icons/content/clear';
 
 import {AppStyles} from '../constants/AppConstants';
 
-import type {NoteId, SavedNote, Tag} from '../types/AppTypes';
-import NoteUtil from '../utils/NoteUtil';
-import {OrderedSet} from '../../node_modules/immutable/dist/immutable';
+import type {NoteId, SavedNote} from '../types/AppTypes';
 
 type Props = {
     onSelectNote: (NoteId) => void,
