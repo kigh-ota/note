@@ -3,6 +3,7 @@ import * as React from 'react';
 import {ipcRenderer} from 'electron';
 import MenuItem from 'material-ui/MenuItem';
 import Drawer from 'material-ui/Drawer';
+import TextField from 'material-ui/TextField';
 import * as Immutable from 'immutable';
 
 import type {NoteId, SavedNote} from '../types/AppTypes';
@@ -13,6 +14,7 @@ type Props = {
 
 type State = {
     notes: Immutable.List<SavedNote>,
+    filterInputValue: string,
 };
 
 export default class NoteViewer extends React.PureComponent {
@@ -21,7 +23,10 @@ export default class NoteViewer extends React.PureComponent {
 
     constructor() {
         super();
-        this.state = {notes: Immutable.List()};
+        this.state = {
+            notes: Immutable.List(),
+            filterInputValue: '',
+        };
 
         ipcRenderer.on('REFRESH_NOTES', (event: Object, notes: Array<SavedNote>) => {
             this.setState({notes: Immutable.List(notes)});
@@ -59,6 +64,22 @@ export default class NoteViewer extends React.PureComponent {
                 open={true}
                 docked={true}
             >
+                <TextField
+                    name="noteFilterInput"
+                    style={{
+                        margin: '0 8px',
+                        width: 250 - 16,
+                        fontFamily: 'Monaco',
+                        fontSize: '13px',
+                    }}
+                    hintText="Filter"
+                    value={this.state.filterInputValue}
+                    onChange={(e: Object, newValue: string) => {
+                        this.setState({
+                            filterInputValue: newValue,
+                        });
+                    }}
+                />
                 {listItems}
             </Drawer>
         );
