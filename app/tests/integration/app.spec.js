@@ -52,4 +52,19 @@ describe('application launch', function () {
     //         assert.ok(stats.isFile());
     //     });
     // });
+
+    it('add notes', () => {
+        const client = this.app.client;
+        return client.elements('.note-list .note-list-item').then(result => {
+            assert.deepStrictEqual(result.value, []);
+        }).then(() => {
+            return client.click('.note-editor .note-title-input');
+        }).then(() => {
+            return client.keys('TEST');
+        }).then(() => {
+            return client.getValue('.note-editor .note-title-input input[name=titleInput]');
+        }).then(value => {
+            assert.equal(value, 'TEST');
+        });
+    });
 });

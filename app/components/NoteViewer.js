@@ -59,6 +59,7 @@ export default class NoteViewer extends React.PureComponent {
                 return (
                     <MenuItem
                         key={note.id}
+                        className="note-list-item"
                         style={{
                             minHeight: (AppStyles.textBase.fontSize + 8) + 'px',
                             lineHeight: (AppStyles.textBase.fontSize + 8) + 'px',
@@ -92,7 +93,9 @@ export default class NoteViewer extends React.PureComponent {
                         });
                     }}
                 />
-                {listItems}
+                <div className="note-list">
+                    {listItems}
+                </div>
             </Drawer>
         );
     }

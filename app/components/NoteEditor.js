@@ -200,7 +200,7 @@ export default class NoteEditor extends React.PureComponent {
         });
 
         return (
-            <div style={{ marginLeft: '250px' }}>
+            <div className="note-editor" style={{ marginLeft: '250px' }}>
                 <Paper
                     zDepth={1}
                     rounded={false}
@@ -209,6 +209,7 @@ export default class NoteEditor extends React.PureComponent {
                     <div style={{width: '100%', display: 'flex'}}>
                         <TextField
                             name="titleInput"
+                            className="note-title-input"
                             style={Object.assign({}, {margin: '8px'}, AppStyles.textBase)}
                             ref={input => {this.titleInput = input;}}
                             hintText="Title"
@@ -236,6 +237,7 @@ export default class NoteEditor extends React.PureComponent {
                     <TextField
                         // separate as a component class
                         name="contentInput"
+                        className="note-content-input"
                         style={Object.assign({}, {
                             margin: '8px',
                             lineHeight: '1.4em',
