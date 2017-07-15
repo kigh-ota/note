@@ -13,8 +13,9 @@ import {grey500, blue900} from 'material-ui/styles/colors';
 
 import {AppStyles} from '../constants/AppConstants';
 
-
-import type {NoteId, SavedNote} from '../types/AppTypes';
+import type {NoteId, SavedNote, Tag} from '../types/AppTypes';
+import type {Set} from 'immutable';
+import NoteUtil from '../utils/NoteUtil';
 
 type Props = {
     onSelectNote: (NoteId) => void,
@@ -51,7 +52,10 @@ export default class NoteViewer extends React.PureComponent {
         if (this.state.filterInputValue === '') {
             return true;    // no filter
         }
-        return (note.title.toLocaleLowerCase().indexOf(this.state.filterInputValue.toLocaleLowerCase()) !== -1); // filter by title (case-insensitive)
+        const tags: Set<Tag> = NoteUtil.parseTags(note.content);
+        console.log(tags);
+        return note.title.toLocaleLowerCase().indexOf(this.state.filterInputValue.toLocaleLowerCase()) !== -1 ||        // filter by title (case-insensitive)
+            tags.some(tag => tag.toLocaleLowerCase().indexOf(this.state.filterInputValue.toLocaleLowerCase()) !== -1);  // filter by tag (case-insensitive)
     }
 
     render() {
