@@ -6,6 +6,10 @@ import Drawer from 'material-ui/Drawer';
 import TextField from 'material-ui/TextField';
 import * as Immutable from 'immutable';
 
+import IconButton from 'material-ui/IconButton';
+import ContentClear from 'material-ui/svg-icons/content/clear';
+
+
 import {AppStyles} from '../constants/AppConstants';
 
 import type {NoteId, SavedNote, Tag} from '../types/AppTypes';
@@ -72,6 +76,9 @@ export default class NoteViewer extends React.PureComponent {
             });
 
         const drawerWidth: number = 250;
+        const clearButtonSize: number = 24;
+        const clearButtonIconSize: number = 18;
+        const clearButtonMarginRight: number = 6;
 
         return (
             <Drawer
@@ -83,7 +90,7 @@ export default class NoteViewer extends React.PureComponent {
                     name="noteFilterInput"
                     style={Object.assign({}, {
                         margin: '0 8px',
-                        width: drawerWidth - 16,
+                        width: drawerWidth - 16 - clearButtonSize - clearButtonMarginRight,
                     }, AppStyles.textBase)}
                     hintText="Filter"
                     value={this.state.filterInputValue}
@@ -93,6 +100,19 @@ export default class NoteViewer extends React.PureComponent {
                         });
                     }}
                 />
+                <IconButton
+                    disabled={this.state.filterInputValue === ''}
+                    onTouchTap={() => {this.setState({filterInputValue: ''});}}
+                    iconStyle={{width: clearButtonIconSize, height: clearButtonIconSize}}
+                    style={{
+                        width: clearButtonSize,
+                        height: clearButtonSize,
+                        padding: (clearButtonSize - clearButtonIconSize) / 2,
+                        marginRight: clearButtonMarginRight,
+                    }}
+                >
+                    <ContentClear />
+                </IconButton>
                 <div className="note-list">
                     {listItems}
                 </div>
