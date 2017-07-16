@@ -28,6 +28,18 @@ export default class NoteContentInput extends React.PureComponent {
         this.input.selectionEnd = end;
     }
 
+    getSelectionStart(el: HTMLTextAreaElement): number {
+        return el.selectionStart;
+    }
+
+    getSelectionEnd(el: HTMLTextAreaElement): number {
+        return el.selectionEnd;
+    }
+
+    getContent(el: HTMLTextAreaElement): string {
+        return el.value;
+    }
+
     focus(): void {
         this.input.focus();
     }
@@ -51,7 +63,7 @@ export default class NoteContentInput extends React.PureComponent {
     }
 
     render() {
-        const lines: number = (this.props.value.match(/\n/g) || []).length + 1;
+        const numLines: number = (this.props.value.match(/\n/g) || []).length + 1;
         const lineHeightEm: number = 1.4;
 
         return (
@@ -64,22 +76,22 @@ export default class NoteContentInput extends React.PureComponent {
                     resize: 'none',
                     border: 'none',
                     outline: 'none',
-                    height: AppStyles.textBase.fontSize * lineHeightEm * Math.max(6, lines),    // FIXME
+                    height: AppStyles.textBase.fontSize * lineHeightEm * Math.max(6, numLines),    // FIXME
                 })}
                 value={this.props.value}
                 onChange={(e: Object) => {
-                    const newValue = e.target.value;
+                    const newValue = this.getContent(e.target);
                     const newValueRep = newValue.replace('　', '  ');    // replace full-width space with two half-width spaces
                     this.props.changeContent(newValueRep);
                     const diffChar = newValueRep.length - newValue.length;
-                    const newSelectionStart = e.target.selectionStart + diffChar;
-                    const newSelectionEnd = e.target.selectionEnd + diffChar;
+                    const newSelectionStart = this.getSelectionStart(e.target) + diffChar;
+                    const newSelectionEnd = this.getSelectionEnd(e.target) + diffChar;
                     this.props.changeSelection(newSelectionStart, newSelectionEnd);
                 }}
                 onKeyPress={(e: Object) => {
                     console.log('NoteContentInput.keypress', e.key);
-                    if (e.target.selectionStart !== e.target.selectionEnd) return;
-                    const pos = e.target.selectionStart;
+                    if (this.getSelectionStart(e.target) !== this.getSelectionEnd(e.target)) return;
+                    const pos = this.getSelectionStart(e.target);
                     if (e.key === 'Enter') {
                         const line = EditorUtil.getLineInfo(pos, this.props.value);
                         if (line.col === line.str.length && line.indent > 0 && line.str.length === line.indent) {
@@ -107,9 +119,9 @@ export default class NoteContentInput extends React.PureComponent {
                 }}
                 onKeyDown={(e: Object) => {
                     console.log('NoteContentInput.keydown', e.key);
-                    if (e.target.selectionStart !== e.target.selectionEnd) {    // some text selected
-                        const posStart = e.target.selectionStart;
-                        const posEnd = e.target.selectionEnd;
+                    if (this.getSelectionStart(e.target) !== this.getSelectionEnd(e.target)) {    // some text selected
+                        const posStart = this.getSelectionStart(e.target);
+                        const posEnd = this.getSelectionEnd(e.target);
                         if (e.key === 'Tab') {
                             e.preventDefault();
                             if (!e.shiftKey) {  // Tab
@@ -123,7 +135,7 @@ export default class NoteContentInput extends React.PureComponent {
                             }
                         }
                     } else {    // no text selected
-                        const pos: number = e.target.selectionStart;
+                        const pos: number = this.getSelectionStart(e.target);
                         if (e.key === 'Tab') {
                             e.preventDefault();
                             if (!e.shiftKey) {  // Tab
@@ -144,10 +156,10 @@ export default class NoteContentInput extends React.PureComponent {
                     }
                 }}
                 onKeyUp={(e: Object) => {
-                    this.props.changeSelection(e.target.selectionStart, e.target.selectionEnd);
+                    this.props.changeSelection(this.getSelectionStart(e.target), this.getSelectionEnd(e.target));
                 }}
                 onMouseUp={(e: Object) => {
-                    this.props.changeSelection(e.target.selectionStart, e.target.selectionEnd);
+                    this.props.changeSelection(this.getSelectionStart(e.target), this.getSelectionEnd(e.target));
                 }}
             />
         );
