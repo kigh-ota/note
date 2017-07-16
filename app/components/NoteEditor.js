@@ -14,7 +14,7 @@ import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
 import Chip from 'material-ui/Chip';
 import IconButton from 'material-ui/IconButton';
-import {grey500} from 'material-ui/styles/colors';
+import {grey500, white, yellow100} from 'material-ui/styles/colors';
 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import ContentAdd from 'material-ui/svg-icons/content/add';
@@ -27,6 +27,10 @@ import type {LineInfo}  from '../utils/StringUtil';
 import NoteUtil from '../utils/NoteUtil';
 
 padStart.shim();
+
+type Props = {
+    onChangeNoteId: (id: ?NoteId) => void,
+}
 
 type State = {
     id: ?number,
@@ -51,6 +55,7 @@ const initState: State = {
 const AUTO_SAVE_INTERVAL_SEC = 15;
 
 export default class NoteEditor extends React.PureComponent {
+    props: Props;
     state: State;
     autoSaveTimer: number;
     titleInput: TextField;
@@ -81,6 +86,7 @@ export default class NoteEditor extends React.PureComponent {
                 id: id,
                 autoSaveNotify: true,
             });
+            this.props.onChangeNoteId(id);
         });
         this.autoSaveTimer = setInterval(this.save.bind(this), AUTO_SAVE_INTERVAL_SEC * 1000);
         this.newNote();
@@ -104,11 +110,13 @@ export default class NoteEditor extends React.PureComponent {
     newNote(): void {
         this.save();
         this.setState(initState);
+        this.props.onChangeNoteId(null);
         this.titleInput.focus();
     }
 
     newNoteToday(): void {
         this.setState(initState);
+        this.props.onChangeNoteId(null);
         const dateStr = NoteEditor.toDateString(new Date());
         this.setState({
             title: dateStr,
@@ -131,6 +139,7 @@ export default class NoteEditor extends React.PureComponent {
                 selectionStart: 0,
                 selectionEnd: 0,
             });
+            this.props.onChangeNoteId(note.id);
         });
         ipcRenderer.send('GET_NOTE', id);
     }
@@ -139,6 +148,7 @@ export default class NoteEditor extends React.PureComponent {
         if (this.state.id) {
             ipcRenderer.send('DELETE_NOTE', this.state.id);
             this.setState(initState);
+            this.props.onChangeNoteId(null);
             this.titleInput.focus();
         }
     }
@@ -213,11 +223,19 @@ export default class NoteEditor extends React.PureComponent {
                     rounded={false}
                     style={{margin: '8px'}}
                 >
-                    <div style={{width: '100%', display: 'flex'}}>
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        backgroundColor: this.state.id ? white : yellow100,
+                    }}>
                         <TextField
                             name="titleInput"
                             className="note-title-input"
-                            style={Object.assign({}, {margin: '8px'}, AppStyles.textBase)}
+                            style={Object.assign(
+                                {},
+                                {margin: '8px'},
+                                AppStyles.textBase
+                            )}
                             ref={input => {this.titleInput = input;}}
                             hintText="Title"
                             underlineShow={false}

@@ -9,7 +9,7 @@ import * as Immutable from 'immutable';
 import IconButton from 'material-ui/IconButton';
 import ContentClear from 'material-ui/svg-icons/content/clear';
 import AvSortByAlpha from 'material-ui/svg-icons/av/sort-by-alpha';
-import {grey500, blue900} from 'material-ui/styles/colors';
+import * as colors from 'material-ui/styles/colors';
 
 import {AppStyles} from '../constants/AppConstants';
 
@@ -18,6 +18,7 @@ import type {Set} from 'immutable';
 import NoteUtil from '../utils/NoteUtil';
 
 type Props = {
+    noteIdInEdit: ?NoteId,
     onSelectNote: (NoteId) => void,
 }
 
@@ -78,6 +79,7 @@ export default class NoteViewer extends React.PureComponent {
                     style={{
                         minHeight: (AppStyles.textBase.fontSize + 8) + 'px',
                         lineHeight: (AppStyles.textBase.fontSize + 8) + 'px',
+                        backgroundColor: note.id === this.props.noteIdInEdit ? colors.blue200 : colors.white,
                     }}
                     innerDivStyle={AppStyles.textBase}
                     primaryText={`${note.title}`}
@@ -133,7 +135,7 @@ export default class NoteViewer extends React.PureComponent {
                         iconStyle={{
                             width: buttonIconSize,
                             height: buttonIconSize,
-                            color: alphaSort ? blue900 : grey500,
+                            color: alphaSort ? colors.blue900 : colors.grey500,
                         }}
                         style={{
                             width: buttonSize,
