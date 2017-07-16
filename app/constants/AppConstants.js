@@ -4,3 +4,10 @@ export const AppModes = {
     DEVELOPMENT: 'DEVELOPMENT',
     TEST: 'TEST',
 };
+
+export const AppStyles = {
+    textBase: {
+        fontFamily: 'Monaco, monospace',
+        fontSize: 12,
+    }
+};

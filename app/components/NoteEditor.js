@@ -2,7 +2,6 @@
 import * as React from 'react';
 import {ipcRenderer} from 'electron';
 import padStart from 'string.prototype.padstart';
-import {OrderedSet} from 'immutable';
 import StringUtil from '../utils/StringUtil';
 
 import TextField from 'material-ui/TextField';
@@ -15,17 +14,23 @@ import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
 import Chip from 'material-ui/Chip';
 import IconButton from 'material-ui/IconButton';
-import {grey500} from 'material-ui/styles/colors';
+import {grey500, white, yellow100} from 'material-ui/styles/colors';
 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ActionToday from 'material-ui/svg-icons/action/today';
 
+import {AppStyles} from '../constants/AppConstants';
+
 import type {Note, NoteId, SavedNote} from '../types/AppTypes';
-import type {Set} from 'immutable';
 import type {LineInfo}  from '../utils/StringUtil';
+import NoteUtil from '../utils/NoteUtil';
 
 padStart.shim();
+
+type Props = {
+    onChangeNoteId: (id: ?NoteId) => void,
+}
 
 type State = {
     id: ?number,
@@ -47,11 +52,10 @@ const initState: State = {
     selectionEnd: 0,
 };
 
-type Tag = string;
-
 const AUTO_SAVE_INTERVAL_SEC = 15;
 
 export default class NoteEditor extends React.PureComponent {
+    props: Props;
     state: State;
     autoSaveTimer: number;
     titleInput: TextField;
@@ -82,6 +86,7 @@ export default class NoteEditor extends React.PureComponent {
                 id: id,
                 autoSaveNotify: true,
             });
+            this.props.onChangeNoteId(id);
         });
         this.autoSaveTimer = setInterval(this.save.bind(this), AUTO_SAVE_INTERVAL_SEC * 1000);
         this.newNote();
@@ -105,11 +110,13 @@ export default class NoteEditor extends React.PureComponent {
     newNote(): void {
         this.save();
         this.setState(initState);
+        this.props.onChangeNoteId(null);
         this.titleInput.focus();
     }
 
     newNoteToday(): void {
         this.setState(initState);
+        this.props.onChangeNoteId(null);
         const dateStr = NoteEditor.toDateString(new Date());
         this.setState({
             title: dateStr,
@@ -132,6 +139,7 @@ export default class NoteEditor extends React.PureComponent {
                 selectionStart: 0,
                 selectionEnd: 0,
             });
+            this.props.onChangeNoteId(note.id);
         });
         ipcRenderer.send('GET_NOTE', id);
     }
@@ -140,20 +148,9 @@ export default class NoteEditor extends React.PureComponent {
         if (this.state.id) {
             ipcRenderer.send('DELETE_NOTE', this.state.id);
             this.setState(initState);
+            this.props.onChangeNoteId(null);
             this.titleInput.focus();
         }
-    }
-
-    static parseTags(content: string): Set<Tag> {
-        return OrderedSet(
-            content.split('\n').filter(line => {
-                return line.match(/^#\S+$/);
-            }).map(line => {
-                return line.substring(1);
-            }).filter(tag => {
-                return !tag.includes('#');
-            })
-        );
     }
 
     setSelectionStates(input: Object): void {
@@ -200,7 +197,7 @@ export default class NoteEditor extends React.PureComponent {
         const lineStart = StringUtil.getLineInfo(this.state.selectionStart, this.state.content);
         const lineEnd = StringUtil.getLineInfo(this.state.selectionEnd, this.state.content);
 
-        const tagChips = NoteEditor.parseTags(this.state.content).map((tag, key) => {
+        const tagChips = NoteUtil.parseTags(this.state.content).map((tag, key) => {
             return (
                 <Chip
                     key={key}
@@ -213,20 +210,32 @@ export default class NoteEditor extends React.PureComponent {
         });
 
         return (
-            <div style={{ marginLeft: '250px' }}>
+            <div
+                className="note-editor" style={{ marginLeft: '250px' }}
+                onKeyDown={(e: Object) => {
+                    if ((e.key === 'S' || e.key === 's') && e.ctrlKey) { // Ctrl+S
+                        this.save();
+                    }
+                }}
+            >
                 <Paper
                     zDepth={1}
                     rounded={false}
                     style={{margin: '8px'}}
                 >
-                    <div style={{width: '100%', display: 'flex'}}>
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        backgroundColor: this.state.id ? white : yellow100,
+                    }}>
                         <TextField
                             name="titleInput"
-                            style={{
-                                margin: '8px',
-                                fontFamily: 'Monaco',
-                                fontSize: '13px',
-                            }}
+                            className="note-title-input"
+                            style={Object.assign(
+                                {},
+                                {margin: '8px'},
+                                AppStyles.textBase
+                            )}
                             ref={input => {this.titleInput = input;}}
                             hintText="Title"
                             underlineShow={false}
@@ -253,12 +262,11 @@ export default class NoteEditor extends React.PureComponent {
                     <TextField
                         // separate as a component class
                         name="contentInput"
-                        style={{
+                        className="note-content-input"
+                        style={Object.assign({}, {
                             margin: '8px',
-                            fontFamily: 'Monaco',
-                            fontSize: '13px',
                             lineHeight: '1.4em',
-                        }}
+                        }, AppStyles.textBase)}
                         ref={input => {this.contentInput = input;}}
                         hintText="Content"
                         underlineShow={false}
@@ -365,17 +373,16 @@ export default class NoteEditor extends React.PureComponent {
                     autoHideDuration={2500}
                     onRequestClose={() => {this.setState({autoSaveNotify: false});}}
                 />
-                <div style={{
+                <div style={Object.assign({}, AppStyles.textBase, {
                     width: '100%',
                     height: 20,
                     position: 'fixed',
                     right: 5,
                     bottom: 5,
                     textAlign: 'right',
-                    fontFamily: 'Monaco',
                     fontSize: '10px',
                     color: grey500,
-                }}>
+                })}>
                     {
                         `[${this.state.selectionStart}:L${lineStart.num}(${lineStart.indent})${lineStart.bullet},`
                         + `${this.state.selectionEnd}:L${lineEnd.num}(${lineEnd.indent})${lineEnd.bullet}]`

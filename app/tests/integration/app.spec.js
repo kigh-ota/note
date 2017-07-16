@@ -52,4 +52,24 @@ describe('application launch', function () {
     //         assert.ok(stats.isFile());
     //     });
     // });
+
+    it('add a note', () => {
+        const client = this.app.client;
+        const SELECTOR_NOTE_LIST_ITEM = '.note-list .note-list-item';
+        return client.elements(SELECTOR_NOTE_LIST_ITEM).then(result => {
+            assert.deepStrictEqual(result.value, []);
+            return client
+                .click('.note-editor .note-title-input')
+                .keys('TEST')
+                .getValue('.note-editor .note-title-input input[name=titleInput]');
+        }).then(value => {
+            assert.equal(value, 'TEST');
+            return client
+                .keys(['Control', 's', '\uE000'])
+                .pause(50)
+                .elements(SELECTOR_NOTE_LIST_ITEM);
+        }).then(result => {
+            assert.equal(result.value.length, 1);
+        });
+    });
 });
