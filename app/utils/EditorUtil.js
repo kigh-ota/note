@@ -5,7 +5,7 @@ export type LineInfo = {
     posBegin: number,
     posEnd: number, // (index of the last character of str) + 1
     col: number,
-    num: number,    // 行番号(1-)
+    num: number,    // line number (1-)
     indent: number,
     bullet: '' | '* ' | '- ' | '・',
 };
@@ -48,18 +48,19 @@ function getLineInfo_(pos: number, str: string): LineInfo {
 
 function changeIndentRangeInner_(str: string, posStart: number, posEnd: number, isIncrease: boolean): {updated: string, diffStart: number, diffEnd: number} {
     const lineStart = getLineInfo_(posStart, str);
-    const lineEnd = getLineInfo_(posEnd, str);
+    const lineEnd = getLineInfo_(posEnd - 1, str);
+    console.log('changeIndentRangeInner_', lineStart.num, lineEnd.num);
     let line = getLineInfo_(posStart, str);
     let diffStart = 0;
     let diffEnd = 0;
     while (true) {  // eslint-disable-line no-constant-condition
         let diff: number = 0;
         if (isIncrease) {
-            const ret = StringUtil.increaseIndent(str, line.posBegin);
+            const ret = EditorUtil.increaseIndent(str, line.posBegin);
             str = ret.updated;
             diff = ret.numAdd;
         } else {
-            const ret = StringUtil.decreaseIndent(str, line.posBegin);
+            const ret = EditorUtil.decreaseIndent(str, line.posBegin);
             str = ret.updated;
             diff = ret.numRemove;
         }
@@ -79,7 +80,7 @@ function changeIndentRangeInner_(str: string, posStart: number, posEnd: number, 
     };
 }
 
-export default class StringUtil {
+export default class EditorUtil {
     static getLineInfo(pos: number, str: string): LineInfo {
         return getLineInfo_(pos, str);
     }
@@ -97,17 +98,15 @@ export default class StringUtil {
         return content;
     }
 
-    // インデントを一段上げた文字列を返す
     static increaseIndent(content: string, pos: number): {updated: string, numAdd: number} {
         const line = getLineInfo_(pos, content);
         const numAdd: number = TAB_SPACES - (line.indent % TAB_SPACES);
         return {
-            updated: StringUtil.changeIndent(numAdd, content, line),
+            updated: EditorUtil.changeIndent(numAdd, content, line),
             numAdd: numAdd
         };
     }
 
-    // インデントを一段下げた文字列を返す
     static decreaseIndent(content: string, pos: number): {updated: string, numRemove: number} {
         const line = getLineInfo_(pos, content);
         if (line.indent === 0) {
@@ -119,7 +118,7 @@ export default class StringUtil {
         const r = line.indent % TAB_SPACES;
         const numRemove = (r === 0) ? TAB_SPACES : r;
         return {
-            updated: StringUtil.changeIndent(-numRemove, content, line),
+            updated: EditorUtil.changeIndent(-numRemove, content, line),
             numRemove: numRemove
         };
     }
